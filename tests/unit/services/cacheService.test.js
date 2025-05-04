@@ -145,9 +145,11 @@ describe('CacheService', () => {
     test('debe aplicar estrategia LRU cuando se alcanza el límite', async () => {
       // Simular un límite bajo para la prueba
       const originalMaxItems = cacheConfig.cachePolicies.expediente.maxItems;
+      const originalStrategy = cacheConfig.cachePolicies.expediente.replacementStrategy;
       
       // Ajustar configuración temporalmente
       cacheConfig.cachePolicies.expediente.maxItems = 3;
+      cacheConfig.cachePolicies.expediente.replacementStrategy = 'lru';
       
       try {
         // Almacenar valores hasta alcanzar el límite
@@ -159,9 +161,7 @@ describe('CacheService', () => {
         
         // Acceder a KEY1 para hacerla más reciente
         cacheService.get('expediente', 'KEY1');
-        
-        // Esperar un poco para asegurar diferentes timestamps
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 10));
         
         // Añadir uno más para forzar reemplazo
         cacheService.set('expediente', 'KEY4', { data: 'valor4' });
@@ -172,6 +172,9 @@ describe('CacheService', () => {
         
         // Verificar que KEY4 está presente
         expect(cacheService.has('expediente', 'KEY4')).toBe(true);
+        
+        // KEY1 debería estar presente porque fue accedida recientemente
+        expect(cacheService.has('expediente', 'KEY1')).toBe(true);
         
         // Verificar que hay exactamente 3 elementos
         const totalPresent = 
@@ -184,6 +187,7 @@ describe('CacheService', () => {
       } finally {
         // Restaurar configuración
         cacheConfig.cachePolicies.expediente.maxItems = originalMaxItems;
+        cacheConfig.cachePolicies.expediente.replacementStrategy = originalStrategy;
       }
     });
   });
@@ -216,31 +220,17 @@ describe('CacheService', () => {
 
   describe('Búsqueda por similitud', () => {
     test('debe encontrar consultas similares', () => {
-      // Almacenar una consulta con metadata correcta
+      // Almacenar una consulta
       const consulta1 = '¿Cuánto cuesta el servicio?';
       const respuesta1 = 'El costo del servicio es $1,500';
       
-      // Asegurarse de que estamos almacenando la consulta correctamente
       cacheService.set('chatgpt', consulta1, respuesta1, 3600, { query: consulta1 });
       
-      // Buscar con consulta similar
+      // Buscar con consulta similar con umbral bajo
       const consultaSimilar = '¿Cuál es el costo del servicio?';
+      const resultado = cacheService.findSimilar('chatgpt', consultaSimilar, 0.5);
       
-      // Verificar primero que la consulta original está en caché
-      const directGet = cacheService.get('chatgpt', consulta1);
-      expect(directGet).toBe(respuesta1);
-      
-      // Buscar con un umbral aún más bajo
-      const resultado = cacheService.findSimilar('chatgpt', consultaSimilar, 0.3);
-      
-      if (resultado === null) {
-        // Si aún no funciona, verificamos que al menos podemos obtener la consulta exacta
-        console.log('findSimilar devolvió null para consulta similar');
-        expect(directGet).toBe(respuesta1);
-      } else {
-        // Verificar que encontró la respuesta
-        expect(resultado).toBe(respuesta1);
-      }
+      expect(resultado).toBe(respuesta1);
     });
     
     test('debe rechazar consultas no suficientemente similares', () => {
