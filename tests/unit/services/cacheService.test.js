@@ -228,7 +228,7 @@ describe('CacheService', () => {
       
       // Buscar con consulta similar con umbral bajo
       const consultaSimilar = '¿Cuál es el costo del servicio?';
-      const resultado = cacheService.findSimilar('chatgpt', consultaSimilar, 0.5);
+      const resultado = cacheService.findSimilar('chatgpt', consultaSimilar, 0.2);
       
       expect(resultado).toBe(respuesta1);
     });

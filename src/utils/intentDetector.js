@@ -11,19 +11,19 @@
 const INTENT_PATTERNS = {
   costo: {
     keywords: ['costo', 'precio', 'valor', 'cobro', 'pago', 'tarifa', 'cuánto cuesta', 'total', 'cuánto'],
-    regex: /(?:cu[aá]nto\s*(?:cuesta|cobrar|cuesta|costo|vale|valor|es)?|(?:qu[eé]|el|el\s*|del\s*|de\s*|)(?:costo|precio|valor|cobro|tarifa|total))/i
+    regex: /(?:cu[aá]nto.*(?:cuesta|cobrar|costo|vale|valor|es)?|(?:qu[eé]|cual|el|de\s*la?)\s*(?:costo|precio|valor|cobro|tarifa|total))/i
   },
   unidad: {
     keywords: ['grúa', 'unidad', 'operador', 'conductor', 'chofer', 'placas', 'vehículo', 'datos', 'camioneta'],
-    regex: /(?:(?:la\s*)?(?:gr[uú]a|unidad|camioneta|operador|conductor|chofer|placas)|(?:datos|qui[eé]n|cual|informaci[oó]n)\s*(?:de\s*la\s*)?(gr[uú]a|unidad|operador)|(?:qu[eé]\s*tipo\s*de\s*(?:unidad|gr[uú]a)))/i
+    regex: /(?:(?:la\s*)?(?:gr[uú]a|unidad|camioneta|operador|conductor|chofer|placas)|(?:datos|qui[eé]n|qu[eé].*)\s*(?:de\s*la\s*)?(gr[uú]a|unidad|operador)|(?:qu[eé]\s*tipo\s*de\s*(?:unidad|gr[uú]a)))/i
   },
   ubicacion: {
-    keywords: ['ubicación', 'posición', 'dónde', 'donde', 'llega', 'llegada', 'mapa', 'maps', 'gps', 'cuándo llega'],
-    regex: /(?:d[oó]nde|ubicaci[oó]n|posici[oó]n|mapa|maps|(?:cu[aá]ndo\s*)?(?:llega|llegar)|tiempo\s*(?:de\s*)?(?:(?:(?:estimado|restante)|llegar)|llegada)|en\s*(?:qu[eé])\s*(?:parte|zona))/i
+    keywords: ['ubicación', 'ubicacion', 'posición', 'dónde', 'donde', 'llega', 'llegada', 'mapa', 'maps', 'gps', 'cuándo llega'],
+    regex: /(?:d[oó]nde|ubicaci[oó]n|en\s*qu[eé]\s*parte|cu[aá]nto\s*falta|(?:cu[aá]ndo\s*)?(?:llega|llegada)|tiempo\s*de\s*llegada|mapa)/i
   },
   tiempos: {
-    keywords: ['tiempo', 'hora', 'horario', 'cuando', 'cuándo', 'contacto', 'término', 'término', 'duración', 'inicio'],
-    regex: /(?:cu[aá]ndo|hora\s*(?:de|del|inicio|contacto)?|(?:tiempo|horario)\s*(?:de|del|contacto|t[eé]rmino|duraci[oó]n)|inicio|(?:t[eé]rmino|finaliz[oó]|fin)|(?:a\s*qu[eé]\s*hora))/i
+    keywords: ['tiempo', 'hora', 'horario', 'cuando', 'cuándo', 'contacto', 'término', 'termino', 'duración', 'inicio', 'día'],
+    regex: /(?:(?:qu[eé]\s*|a\s*qu[eé]\s*)?hora|cu[aá]ndo|tiempo\s*de|duraci[oó]n|inicio|inici[oó]|t[eé]rmino|termin[oó])/i
   }
 };
 
