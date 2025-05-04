@@ -1,4 +1,4 @@
-/**
+/****
  * Detector básico de intenciones
  * Proporciona una forma rápida de identificar intenciones comunes
  * sin necesidad de consultar la API de OpenAI para casos simples
@@ -11,19 +11,19 @@
 const INTENT_PATTERNS = {
   costo: {
     keywords: ['costo', 'precio', 'valor', 'cobro', 'pago', 'tarifa', 'cuánto cuesta', 'total', 'cuánto'],
-    regex: /(?:cu[aá]nto.*(?:cuesta|cobrar|costo|vale|valor|es)?|(?:qu[eé]|cual|el|de\s*la?)\s*(?:costo|precio|valor|cobro|tarifa|total))/i
+    regex: /(?:cu[aá]nto\s+(?:cuesta|costo|vale|valor|es)?|(?:qu[eé]|cual|el|de\s*la?)\s*(?:costo|precio|valor|cobro|tarifa|total)|(?:saber.*precio)|(?:dime.*cuanto)|cu[aá]nto.*cobrar|apoyo.*costo)/i
   },
   unidad: {
     keywords: ['grúa', 'unidad', 'operador', 'conductor', 'chofer', 'placas', 'vehículo', 'datos', 'camioneta'],
-    regex: /(?:(?:la\s*)?(?:gr[uú]a|unidad|camioneta|operador|conductor|chofer|placas)|(?:datos|qui[eé]n|qu[eé].*)\s*(?:de\s*la\s*)?(gr[uú]a|unidad|operador)|(?:qu[eé]\s*tipo\s*de\s*(?:unidad|gr[uú]a)))/i
+    regex: /(?:(?:qui[eé]n.*operador)|(?:datos.*(?:de\s*(?:la\s*)?(?:gr[uú]a|unidad|chofer|operador)))|(?:qu[eé]\s*tipo\s*de\s*(?:unidad|gr[uú]a))|(?:placas.*gr[uú]a)|(?:c[oó]mo\s*es.*veh[ií]culo)|(?:dame.*datos))/i
   },
   ubicacion: {
     keywords: ['ubicación', 'ubicacion', 'posición', 'dónde', 'donde', 'llega', 'llegada', 'mapa', 'maps', 'gps', 'cuándo llega'],
-    regex: /(?:d[oó]nde|ubicaci[oó]n|en\s*qu[eé]\s*parte|cu[aá]nto\s*falta|(?:cu[aá]ndo\s*)?(?:llega|llegada)|tiempo\s*de\s*llegada|mapa)/i
+    regex: /(?:d[oó]nde.*(?:est[aá]|va)|ubicaci[oó]n.*mapa|en\s*qu[eé]\s*parte|cu[aá]nto\s*falta.*llegue|(?:tiempo\s*de\s*llegada)|(?:cuando.*llega)|(?:ver.*ubicaci[oó]n)|mapa)/i
   },
   tiempos: {
     keywords: ['tiempo', 'hora', 'horario', 'cuando', 'cuándo', 'contacto', 'término', 'termino', 'duración', 'inicio', 'día'],
-    regex: /(?:(?:qu[eé]\s*|a\s*qu[eé]\s*)?hora|cu[aá]ndo|tiempo\s*de|duraci[oó]n|inicio|inici[oó]|t[eé]rmino|termin[oó])/i
+    regex: /(?:(?:qu[eé]\s*|a\s*qu[eé]\s*)?hora|cu[aá]ndo.*(?:inici[oó]|termin[oó])|hora\s*de\s*contacto|duraci[oó]n\s*total|qu[eé]\s*d[ií]a)/i
   }
 };
 
@@ -76,6 +76,11 @@ function detectBasicIntent(message) {
     if (score > bestMatch.confidence) {
       bestMatch = { intent, confidence: score };
     }
+  }
+  
+  // Evitar conflictos priorizando ubicación sobre unidad cuando ambas coinciden
+  if (results.ubicacion > 0.5 && results.unidad > 0.5) {
+    bestMatch = { intent: 'ubicacion', confidence: results.ubicacion };
   }
   
   // Si la confianza es muy baja, considerar que no hay intención clara

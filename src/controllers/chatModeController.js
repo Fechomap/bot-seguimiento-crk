@@ -296,6 +296,11 @@ Ahora puedes consultar información de tu expediente mediante lenguaje natural. 
    * @private
    */
   async processChatGPTQuery(chatId, session, mensaje) {
+    // Asegurar que el expediente se registra en logs
+    const expedienteInfo = session.expediente ? {
+      expediente: session.expediente,
+      nombre: session.datosExpediente?.nombre
+    } : null;
     // Mostrar indicador de escritura
     await this.bot.sendChatAction(chatId, 'typing');
     

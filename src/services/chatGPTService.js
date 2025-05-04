@@ -74,7 +74,8 @@ class ChatGPTService {
     const startTime = Date.now();
     logger.info('🔍 Procesando consulta con ChatGPT', { 
       mensaje: mensaje.substring(0, 50) + (mensaje.length > 50 ? '...' : ''),
-      expediente: datosExpediente.expediente
+      expediente: datosExpediente?.expediente || null,
+      nombre: datosExpediente?.nombre
     });
     
     // Intentar obtener respuesta de caché si está habilitado
