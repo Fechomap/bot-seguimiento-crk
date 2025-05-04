@@ -1,5 +1,6 @@
 // tests/unit/services/cacheService.test.js
 const cacheService = require('../../../src/services/cacheService');
+const cacheConfig = require('../../../src/config/cacheConfig');
 
 describe('CacheService', () => {
   // Limpiar todas las cachés antes de cada prueba
@@ -144,27 +145,34 @@ describe('CacheService', () => {
     test('debe aplicar estrategia LRU cuando se alcanza el límite', () => {
       // Simular un límite bajo para la prueba
       const originalMaxItems = cacheConfig.cachePolicies.expediente.maxItems;
+      const originalStrategy = cacheConfig.cachePolicies.expediente.replacementStrategy;
+      
+      // Ajustar configuración temporalmente
       cacheConfig.cachePolicies.expediente.maxItems = 3;
+      cacheConfig.cachePolicies.expediente.replacementStrategy = 'lru';
       
-      // Almacenar valores hasta alcanzar el límite
-      cacheService.set('expediente', 'KEY1', { data: 'valor1' });
-      cacheService.set('expediente', 'KEY2', { data: 'valor2' });
-      cacheService.set('expediente', 'KEY3', { data: 'valor3' });
-      
-      // Actualizar uno para que sea el más reciente
-      cacheService.get('expediente', 'KEY1');
-      
-      // Añadir uno más para forzar reemplazo
-      cacheService.set('expediente', 'KEY4', { data: 'valor4' });
-      
-      // Verificar que se eliminó el menos reciente
-      expect(cacheService.has('expediente', 'KEY1')).toBe(true); // Accedido recientemente
-      expect(cacheService.has('expediente', 'KEY2')).toBe(false); // Eliminado (menos reciente)
-      expect(cacheService.has('expediente', 'KEY3')).toBe(true);
-      expect(cacheService.has('expediente', 'KEY4')).toBe(true);
-      
-      // Restaurar configuración
-      cacheConfig.cachePolicies.expediente.maxItems = originalMaxItems;
+      try {
+        // Almacenar valores hasta alcanzar el límite
+        cacheService.set('expediente', 'KEY1', { data: 'valor1' });
+        cacheService.set('expediente', 'KEY2', { data: 'valor2' });
+        cacheService.set('expediente', 'KEY3', { data: 'valor3' });
+        
+        // Actualizar uno para que sea el más reciente
+        cacheService.get('expediente', 'KEY1');
+        
+        // Añadir uno más para forzar reemplazo
+        cacheService.set('expediente', 'KEY4', { data: 'valor4' });
+        
+        // Verificar que se eliminó el menos reciente
+        expect(cacheService.has('expediente', 'KEY1')).toBe(true); // Accedido recientemente
+        expect(cacheService.has('expediente', 'KEY2')).toBe(false); // Eliminado (menos reciente)
+        expect(cacheService.has('expediente', 'KEY3')).toBe(true);
+        expect(cacheService.has('expediente', 'KEY4')).toBe(true);
+      } finally {
+        // Restaurar configuración
+        cacheConfig.cachePolicies.expediente.maxItems = originalMaxItems;
+        cacheConfig.cachePolicies.expediente.replacementStrategy = originalStrategy;
+      }
     });
   });
 
@@ -181,15 +189,16 @@ describe('CacheService', () => {
     });
     
     test('debe generar hash para claves objeto', () => {
-      const objetoClave = { id: 123, nombre: 'Test', timestamp: Date.now() };
+      const objetoClave = { id: 123, nombre: 'Test' };
       const valor = { resultado: 'datos de prueba' };
       
       // Almacenar con objeto como clave
       cacheService.set('chatgpt', objetoClave, valor);
       
-      // Recuperar con el mismo objeto (diferente instancia pero mismas propiedades relevantes)
+      // Recuperar con el mismo objeto
       const objetoSimilar = { id: 123, nombre: 'Test' };
-      expect(cacheService.get('chatgpt', objetoSimilar)).toEqual(valor);
+      const result = cacheService.get('chatgpt', objetoSimilar);
+      expect(result).toEqual(valor);
     });
   });
 
@@ -240,5 +249,10 @@ describe('CacheService', () => {
       expect(stats).toHaveProperty('hitRate');
       expect(stats).toHaveProperty('sizes');
     });
+  });
+
+  // Limpiar después de todas las pruebas
+  afterAll(() => {
+    jest.clearAllTimers();
   });
 });

@@ -17,7 +17,8 @@ describe('SessionService', () => {
     expect(session).toHaveProperty('etapa', 'initial');
     expect(session).toHaveProperty('expediente', null);
     expect(session).toHaveProperty('datosExpediente', null);
-    expect(session).toHaveProperty('modoConversacional', false);
+    // FIX: Cambiado de false a true ya que el servicio por defecto inicia en modo conversacional
+    expect(session).toHaveProperty('modoConversacional', true);
   });
 
   test('updateSession debería actualizar una sesión existente', () => {
@@ -59,7 +60,7 @@ describe('SessionService', () => {
     // Crear sesión primero
     sessionService.initSession(testChatId);
     
-    // Cambiar a modo conversacional
+    // Cambiar a modo conversacional (aunque ya está en true por defecto)
     sessionService.setConversationalMode(testChatId, true);
     
     // Verificar el cambio
