@@ -5,6 +5,22 @@ const ExpedienteService = require('../../../src/services/expedienteService');
 const ChatGPTService = require('../../../src/services/chatGPTService');
 const { ExpedienteModel } = require('../../../src/models/expedienteModel');
 
+// Mock ExpedienteModel local para el mock de ExpedienteService
+class mockExpedienteModel {
+  constructor() {
+    this.expediente = '';
+    this.nombre = '';
+    this.vehiculo = '';
+    this.estatus = '';
+    this.servicio = '';
+    this.destino = '';
+  }
+
+  actualizarDatosGenerales(data) {
+    Object.assign(this, data);
+  }
+}
+
 // Mock de TelegramBot
 const mockBot = {
   sendMessage: jest.fn().mockResolvedValue({ message_id: 123 }),
@@ -14,6 +30,7 @@ const mockBot = {
 };
 
 // Mock de ChatGPTService
+// En el mock de ChatGPTService
 jest.mock('../../../src/services/chatGPTService', () => {
   return jest.fn().mockImplementation(() => {
     return {
@@ -22,7 +39,8 @@ jest.mock('../../../src/services/chatGPTService', () => {
           throw new Error('Error simulado en ChatGPT');
         }
         
-        if (mensaje.includes('costo')) {
+        // Corregir aquí para reconocer "cuesta" y "costo"
+        if (mensaje.includes('costo') || mensaje.includes('cuesta')) {
           return '💰 El costo total del servicio es de $1,250.00 MXN.';
         } else if (mensaje.includes('operador') || mensaje.includes('unidad')) {
           return '🚚 El operador asignado es Juan Pérez con la unidad tipo Plataforma #7.';
@@ -38,14 +56,14 @@ jest.mock('../../../src/services/chatGPTService', () => {
 
 // Mock de ExpedienteService
 jest.mock('../../../src/services/expedienteService', () => {
-  return jest.fn().mockImplementation(() => {
+  return function() {
     return {
       obtenerExpedienteCompleto: jest.fn().mockImplementation(async (numeroExp) => {
         if (numeroExp === 'ERROR') {
           throw new Error('Expediente no encontrado');
         }
         
-        const expediente = new ExpedienteModel();
+        const expediente = new mockExpedienteModel();
         expediente.actualizarDatosGenerales({
           expediente: numeroExp,
           nombre: 'Cliente Prueba',
@@ -57,10 +75,10 @@ jest.mock('../../../src/services/expedienteService', () => {
         
         return expediente;
       }),
-      actualizarDatosExpediente: jest.fn().mockResolvedValue(new ExpedienteModel()),
-      getCachedExpediente: jest.fn().mockReturnValue(new ExpedienteModel())
+      actualizarDatosExpediente: jest.fn().mockResolvedValue(new mockExpedienteModel()),
+      getCachedExpediente: jest.fn().mockReturnValue(new mockExpedienteModel())
     };
-  });
+  };
 });
 
 describe('ChatModeController', () => {

@@ -15,15 +15,15 @@ const INTENT_PATTERNS = {
     },
     unidad: {
       keywords: ['grúa', 'unidad', 'operador', 'conductor', 'chofer', 'placas', 'vehículo'],
-      regex: /(?:la\s*(?:gr[uú]a|unidad|camioneta)|(?:qu[eé]|el|del)\s*(?:operador|conductor|chofer|placas))/i
+      regex: /(?:(?:la\s*)?(?:gr[uú]a|unidad|camioneta))|(?:qu[eé]|el|del)\s*(?:operador|conductor|chofer|placas)|(?:qu[eé]\s*tipo\s*de\s*(?:unidad|gr[uú]a))/i
     },
     ubicacion: {
       keywords: ['ubicación', 'posición', 'dónde', 'donde', 'llega', 'llegada', 'mapa', 'maps', 'gps'],
-      regex: /(?:d[oó]nde|ubicaci[oó]n|posici[oó]n|mapa|cu[aá]ndo\s*(?:llega|llegará)|tiempo\s*(?:estimado|de llegada|restante))/i
+      regex: /(?:d[oó]nde|ubicaci[oó]n|posici[oó]n|mapa|(?:cu[aá]ndo\s*)?llega|tiempo\s*(?:estimado|de\s*llegada|restante))/i
     },
     tiempos: {
       keywords: ['tiempo', 'hora', 'horario', 'cuando', 'cuándo', 'contacto', 'término', 'término', 'duración'],
-      regex: /(?:cu[aá]ndo|hora\s*(?:de|del|inicio)|tiempo\s*(?:de|del)|inicio|t[eé]rmino|duraci[oó]n|finaliz[oó])/i
+      regex: /(?:cu[aá]ndo|hora\s*(?:de|del|inicio|contacto)|(?:tiempo|horario)\s*(?:de|del|contacto|término|duración)|inicio|t[eé]rmino|finaliz[oó])/i
     }
   };
   
