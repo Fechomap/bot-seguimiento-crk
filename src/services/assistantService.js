@@ -72,7 +72,7 @@ class AssistantService {
       const args = JSON.parse(toolCall.function.arguments);
       
       try {
-        const output = await this.executeFunction(functionName, args);
+        const output = await this.executeFunction(functionName, args, threadId);
         toolOutputs.push({
           tool_call_id: toolCall.id,
           output: JSON.stringify(output)
@@ -102,38 +102,83 @@ class AssistantService {
     return messages.data[0].content[0].text.value;
   }
 
-  async executeFunction(functionName, args) {
+  async executeFunction(functionName, args, threadId) {
     const ExpedienteService = require('./expedienteService');
     const expedienteService = new ExpedienteService();
+    const SessionService = require('./sessionService');
+    const sessionService = new SessionService();
+    
+    // Obtener la sesión asociada al thread
+    let session = null;
+    let numeroExpediente = args.numero;
+    
+    // Si no se proporciona número explícitamente, buscar en la sesión
+    if (!numeroExpediente) {
+        // Intentar encontrar la sesión por threadId
+        session = this.findSessionByThreadId(threadId, sessionService);
+        
+        if (session) {
+            // Verificar si ha pasado más de 1 minuto desde la última actualización
+            const currentTime = new Date();
+            const timeDiff = (currentTime - session.ultimaActualizacion) / (1000 * 60); // diferencia en minutos
+            
+            if (timeDiff <= 1 && session.expediente) {
+                numeroExpediente = session.expediente;
+            }
+            // Si pasó más de 1 minuto, no usamos el expediente guardado
+        }
+    }
+    
+    if (!numeroExpediente) {
+        return { error: 'Por favor, proporciona un número de expediente. ¿Qué número de expediente deseas consultar?' };
+    }
+    
+    // Guardar/actualizar el expediente en la sesión
+    if (session) {
+        session.expediente = numeroExpediente;
+        sessionService.updateSession(session.chatId, session);
+    }
     
     switch (functionName) {
-      case 'obtener_expediente':
-        const expediente = await expedienteService.obtenerExpedienteCompleto(args.numero);
-        return expediente ? expediente.aContextoIA() : { error: 'Expediente no encontrado' };
-      
-      case 'obtener_costo':
-        await expedienteService.actualizarDatosExpediente(args.numero, 'costo');
-        const expedienteCosto = await expedienteService.getCachedExpediente(args.numero);
-        return expedienteCosto?.costo || { error: 'No se pudo obtener información de costo' };
-      
-      case 'obtener_unidad':
-        await expedienteService.actualizarDatosExpediente(args.numero, 'unidad');
-        const expedienteUnidad = await expedienteService.getCachedExpediente(args.numero);
-        return expedienteUnidad?.unidad || { error: 'No se pudo obtener información de la unidad' };
-      
-      case 'obtener_ubicacion':
-        await expedienteService.actualizarDatosExpediente(args.numero, 'ubicacion');
-        const expedienteUbicacion = await expedienteService.getCachedExpediente(args.numero);
-        return expedienteUbicacion?.ubicacion || { error: 'No se pudo obtener información de ubicación' };
-      
-      case 'obtener_tiempos':
-        await expedienteService.actualizarDatosExpediente(args.numero, 'tiempos');
-        const expedienteTiempos = await expedienteService.getCachedExpediente(args.numero);
-        return expedienteTiempos?.tiempos || { error: 'No se pudo obtener información de tiempos' };
-      
-      default:
-        throw new Error(`Función no reconocida: ${functionName}`);
+        case 'obtener_expediente':
+            const expediente = await expedienteService.obtenerExpedienteCompleto(numeroExpediente);
+            return expediente ? expediente.aContextoIA() : { error: 'Expediente no encontrado' };
+        
+        case 'obtener_costo':
+            await expedienteService.actualizarDatosExpediente(numeroExpediente, 'costo');
+            const expedienteCosto = await expedienteService.getCachedExpediente(numeroExpediente);
+            return expedienteCosto?.costo || { error: 'No se pudo obtener información de costo' };
+        
+        case 'obtener_unidad':
+            await expedienteService.actualizarDatosExpediente(numeroExpediente, 'unidad');
+            const expedienteUnidad = await expedienteService.getCachedExpediente(numeroExpediente);
+            return expedienteUnidad?.unidad || { error: 'No se pudo obtener información de la unidad' };
+        
+        case 'obtener_ubicacion':
+            await expedienteService.actualizarDatosExpediente(numeroExpediente, 'ubicacion');
+            const expedienteUbicacion = await expedienteService.getCachedExpediente(numeroExpediente);
+            return expedienteUbicacion?.ubicacion || { error: 'No se pudo obtener información de ubicación' };
+        
+        case 'obtener_tiempos':
+            await expedienteService.actualizarDatosExpediente(numeroExpediente, 'tiempos');
+            const expedienteTiempos = await expedienteService.getCachedExpediente(numeroExpediente);
+            return expedienteTiempos?.tiempos || { error: 'No se pudo obtener información de tiempos' };
+        
+        default:
+            throw new Error(`Función no reconocida: ${functionName}`);
     }
+  }
+
+  // Nuevo método helper para encontrar la sesión por threadId
+  findSessionByThreadId(threadId, sessionService) {
+    const sessions = sessionService.sessions;
+    for (const [chatId, session] of Object.entries(sessions)) {
+        if (session.threadId === threadId) {
+            session.chatId = chatId; // Agregar chatId para uso posterior
+            return session;
+        }
+    }
+    return null;
   }
 }
 

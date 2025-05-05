@@ -12,6 +12,18 @@ class SessionService {
   }
 
   /**
+   * Getter para acceder a las sesiones
+   * @returns {Object} - Objeto con todas las sesiones
+   */
+  get sessions() {
+    return this._sessions;
+  }
+
+  set sessions(value) {
+    this._sessions = value;
+  }
+
+  /**
    * Inicializa o reinicia la sesión de un usuario
    * @param {number} chatId - ID del chat
    */
@@ -19,19 +31,19 @@ class SessionService {
     // Definir el modo por defecto según configuración
     const defaultMode = process.env.DEFAULT_MODE === 'traditional' ? false : true;
     
-    this.sessions[chatId] = {
+    this._sessions[chatId] = {
       etapa: 'initial',
       expediente: null,
       datosExpediente: null,
       modoConversacional: defaultMode,
       contextoConversacion: [],
       historicoConsultas: [],
-      threadId: null, // AGREGAR ESTE CAMPO
+      threadId: null,
       ultimaActualizacion: new Date()
     };
     
     console.log(`📝 Sesión inicializada para usuario ${chatId} en modo ${defaultMode ? 'conversacional' : 'tradicional'}`);
-    return this.sessions[chatId];
+    return this._sessions[chatId];
   }
 
   /**
@@ -40,7 +52,7 @@ class SessionService {
    * @returns {boolean} - true si existe la sesión, false en caso contrario
    */
   hasSession(chatId) {
-    return !!this.sessions[chatId];
+    return !!this._sessions[chatId];
   }
 
   /**
@@ -54,9 +66,9 @@ class SessionService {
     }
     
     // Actualizar timestamp de último acceso
-    this.sessions[chatId].ultimaActualizacion = new Date();
+    this._sessions[chatId].ultimaActualizacion = new Date();
     
-    return this.sessions[chatId];
+    return this._sessions[chatId];
   }
 
   /**
@@ -67,7 +79,7 @@ class SessionService {
   updateSession(chatId, sessionData) {
     if (this.hasSession(chatId)) {
       // Preservar la fecha de última actualización
-      this.sessions[chatId] = {
+      this._sessions[chatId] = {
         ...sessionData,
         ultimaActualizacion: new Date()
       };
@@ -86,8 +98,8 @@ class SessionService {
    */
   updateSessionField(chatId, field, value) {
     if (this.hasSession(chatId)) {
-      this.sessions[chatId][field] = value;
-      this.sessions[chatId].ultimaActualizacion = new Date();
+      this._sessions[chatId][field] = value;
+      this._sessions[chatId].ultimaActualizacion = new Date();
       return true;
     }
     return false;
@@ -124,16 +136,16 @@ class SessionService {
         timestamp: new Date()
       };
       
-      if (!this.sessions[chatId].historicoConsultas) {
-        this.sessions[chatId].historicoConsultas = [];
+      if (!this._sessions[chatId].historicoConsultas) {
+        this._sessions[chatId].historicoConsultas = [];
       }
       
-      this.sessions[chatId].historicoConsultas.push(registro);
-      this.sessions[chatId].ultimaActualizacion = new Date();
+      this._sessions[chatId].historicoConsultas.push(registro);
+      this._sessions[chatId].ultimaActualizacion = new Date();
       
       // Limitar el tamaño del histórico (máximo 20 consultas)
-      if (this.sessions[chatId].historicoConsultas.length > 20) {
-        this.sessions[chatId].historicoConsultas = this.sessions[chatId].historicoConsultas.slice(-20);
+      if (this._sessions[chatId].historicoConsultas.length > 20) {
+        this._sessions[chatId].historicoConsultas = this._sessions[chatId].historicoConsultas.slice(-20);
       }
       
       return true;
@@ -147,8 +159,8 @@ class SessionService {
    */
   deleteSession(chatId) {
     if (this.hasSession(chatId)) {
-      const threadId = this.sessions[chatId].threadId;
-      delete this.sessions[chatId];
+      const threadId = this._sessions[chatId].threadId;
+      delete this._sessions[chatId];
       console.log(`🗑️ Sesión eliminada para usuario ${chatId}`);
       // TODO: Considerar limpiar el thread en OpenAI
       return true;
@@ -166,8 +178,8 @@ class SessionService {
     const now = new Date();
     let count = 0;
     
-    Object.keys(this.sessions).forEach(chatId => {
-      const session = this.sessions[chatId];
+    Object.keys(this._sessions).forEach(chatId => {
+      const session = this._sessions[chatId];
       const ageInMinutes = (now - session.ultimaActualizacion) / (1000 * 60);
       
       if (ageInMinutes > maxAge) {
@@ -186,7 +198,7 @@ class SessionService {
    */
   getThreadId(chatId) {
     if (this.hasSession(chatId)) {
-      return this.sessions[chatId].threadId;
+      return this._sessions[chatId].threadId;
     }
     return null;
   }
@@ -199,8 +211,8 @@ class SessionService {
    */
   setThreadId(chatId, threadId) {
     if (this.hasSession(chatId)) {
-      this.sessions[chatId].threadId = threadId;
-      this.sessions[chatId].ultimaActualizacion = new Date();
+      this._sessions[chatId].threadId = threadId;
+      this._sessions[chatId].ultimaActualizacion = new Date();
       return true;
     }
     return false;
@@ -211,12 +223,12 @@ class SessionService {
    * @returns {Object} - Estadísticas de sesiones
    */
   getStats() {
-    const totalSessions = Object.keys(this.sessions).length;
+    const totalSessions = Object.keys(this._sessions).length;
     let conversationalCount = 0;
     let traditionalCount = 0;
     let withExpedienteCount = 0;
     
-    Object.values(this.sessions).forEach(session => {
+    Object.values(this._sessions).forEach(session => {
       if (session.modoConversacional) {
         conversationalCount++;
       } else {
