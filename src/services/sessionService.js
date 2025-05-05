@@ -23,9 +23,10 @@ class SessionService {
       etapa: 'initial',
       expediente: null,
       datosExpediente: null,
-      modoConversacional: defaultMode, // Modo conversacional por defecto a menos que se configure lo contrario
-      contextoConversacion: [], // Para guardar el contexto de la conversación con IA
-      historicoConsultas: [], // Histórico de consultas realizadas
+      modoConversacional: defaultMode,
+      contextoConversacion: [],
+      historicoConsultas: [],
+      threadId: null, // AGREGAR ESTE CAMPO
       ultimaActualizacion: new Date()
     };
     
@@ -146,8 +147,10 @@ class SessionService {
    */
   deleteSession(chatId) {
     if (this.hasSession(chatId)) {
+      const threadId = this.sessions[chatId].threadId;
       delete this.sessions[chatId];
       console.log(`🗑️ Sesión eliminada para usuario ${chatId}`);
+      // TODO: Considerar limpiar el thread en OpenAI
       return true;
     }
     return false;
@@ -174,6 +177,33 @@ class SessionService {
     });
     
     return count;
+  }
+
+  /**
+   * Obtiene el threadId de una sesión
+   * @param {number} chatId - ID del chat
+   * @returns {string|null} - Thread ID o null si no existe
+   */
+  getThreadId(chatId) {
+    if (this.hasSession(chatId)) {
+      return this.sessions[chatId].threadId;
+    }
+    return null;
+  }
+
+  /**
+   * Establece el threadId para una sesión
+   * @param {number} chatId - ID del chat
+   * @param {string} threadId - Thread ID a establecer
+   * @returns {boolean} - true si se estableció correctamente
+   */
+  setThreadId(chatId, threadId) {
+    if (this.hasSession(chatId)) {
+      this.sessions[chatId].threadId = threadId;
+      this.sessions[chatId].ultimaActualizacion = new Date();
+      return true;
+    }
+    return false;
   }
 
   /**

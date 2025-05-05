@@ -1,10 +1,9 @@
 /**
  * Controlador para el modo conversacional
- * Gestiona la interacción mediante lenguaje natural y la comunicación con ChatGPT
+ * Gestiona la interacción mediante lenguaje natural y la comunicación con OpenAI Assistant
  */
-const ChatGPTService = require('../services/chatGPTService');
+const AssistantService = require('../services/assistantService');
 const ExpedienteService = require('../services/expedienteService');
-const intentDetector = require('../utils/intentDetector');
 const formatters = require('../utils/formatters');
 
 class ChatModeController {
@@ -16,7 +15,7 @@ class ChatModeController {
   constructor(bot, sessionService) {
     this.bot = bot;
     this.sessionService = sessionService;
-    this.chatGPTService = new ChatGPTService();
+    this.assistantService = new AssistantService();
     this.expedienteService = new ExpedienteService();
   }
 
@@ -195,96 +194,9 @@ Ahora puedes consultar información de tu expediente mediante lenguaje natural. 
       
       return { action: 'continue' };
     }
-
-    // Detectar intenciones básicas para respuestas rápidas predefinidas
-    const basicIntent = intentDetector.detectBasicIntent(mensaje);
-    
-    // Si es una intención básica reconocida, procesarla directamente sin ChatGPT
-    if (basicIntent.intent && basicIntent.confidence > 0.8) {
-      return await this.handleBasicIntent(chatId, session, basicIntent);
-    }
-    
-    // Si llegamos aquí, procesamos con ChatGPT
+  
+    // Procesar con Assistant API
     return await this.processChatGPTQuery(chatId, session, mensaje);
-  }
-
-  /**
-   * Maneja intenciones básicas reconocidas sin usar ChatGPT
-   * @param {number} chatId - ID del chat
-   * @param {Object} session - Sesión del usuario
-   * @param {Object} intentData - Datos de la intención detectada
-   * @returns {Object} - Acción a realizar
-   * @private
-   */
-  async handleBasicIntent(chatId, session, intentData) {
-    const expediente = session.datosExpediente;
-    
-    if (!expediente) {
-      await this.bot.sendMessage(
-        chatId,
-        '❌ Parece que hubo un problema con los datos del expediente. Por favor, consulta nuevamente el expediente.'
-      );
-      return { action: 'continue' };
-    }
-    
-    let responseText = '';
-    
-    switch (intentData.intent) {
-      case 'costo':
-        // Actualizar datos de costo para asegurar información reciente
-        try {
-          await this.expedienteService.actualizarDatosExpediente(session.expediente, 'costo');
-          const expedienteCosto = await this.expedienteService.getCachedExpediente(session.expediente);
-          responseText = formatters.formatCostoServicio(expediente, expedienteCosto.costo);
-        } catch (error) {
-          console.error('Error al actualizar costos:', error);
-          responseText = formatters.formatCostoServicio(expediente, expediente.costo);
-        }
-        break;
-        
-      case 'unidad':
-        // Actualizar datos de unidad para asegurar información reciente
-        try {
-          await this.expedienteService.actualizarDatosExpediente(session.expediente, 'unidad');
-          const expedienteUnidad = await this.expedienteService.getCachedExpediente(session.expediente);
-          responseText = formatters.formatDatosUnidad(expedienteUnidad.unidad);
-        } catch (error) {
-          console.error('Error al actualizar datos de unidad:', error);
-          responseText = formatters.formatDatosUnidad(expediente.unidad);
-        }
-        break;
-        
-      case 'ubicacion':
-        // Actualizar datos de ubicación para asegurar información reciente
-        try {
-          await this.expedienteService.actualizarDatosExpediente(session.expediente, 'ubicacion');
-          const expedienteUbicacion = await this.expedienteService.getCachedExpediente(session.expediente);
-          responseText = formatters.formatUbicacionTiempo(expedienteUbicacion.ubicacion);
-        } catch (error) {
-          console.error('Error al actualizar ubicación:', error);
-          responseText = formatters.formatUbicacionTiempo(expediente.ubicacion);
-        }
-        break;
-        
-      case 'tiempos':
-        // Actualizar datos de tiempos para asegurar información reciente
-        try {
-          await this.expedienteService.actualizarDatosExpediente(session.expediente, 'tiempos');
-          const expedienteTiempos = await this.expedienteService.getCachedExpediente(session.expediente);
-          responseText = formatters.formatTiempos(expedienteTiempos.tiempos);
-        } catch (error) {
-          console.error('Error al actualizar tiempos:', error);
-          responseText = formatters.formatTiempos(expediente.tiempos);
-        }
-        break;
-        
-      default:
-        // Si no reconocemos la intención, usar ChatGPT
-        return await this.processChatGPTQuery(chatId, session, intentData.originalMessage);
-    }
-    
-    await this.bot.sendMessage(chatId, responseText, { parse_mode: 'Markdown' });
-    return { action: 'continue' };
   }
 
   /**
@@ -296,46 +208,30 @@ Ahora puedes consultar información de tu expediente mediante lenguaje natural. 
    * @private
    */
   async processChatGPTQuery(chatId, session, mensaje) {
-    // Asegurar que el expediente se registra en logs
-    const expedienteInfo = session.expediente ? {
-      expediente: session.expediente,
-      nombre: session.datosExpediente?.nombre
-    } : null;
     // Mostrar indicador de escritura
     await this.bot.sendChatAction(chatId, 'typing');
     
     try {
-      // Obtener respuesta de ChatGPT
-      const respuesta = await this.chatGPTService.procesarConsulta(
-        mensaje,
-        session.datosExpediente,
-        session.contextoConversacion
-      );
-      
-      // Guardar el intercambio en el contexto de la conversación
-      session.contextoConversacion.push({ role: 'user', content: mensaje });
-      session.contextoConversacion.push({ role: 'assistant', content: respuesta });
-      
-      // Limitar el tamaño del contexto (máximo 10 mensajes para evitar tokens excesivos)
-      if (session.contextoConversacion.length > 10) {
-        session.contextoConversacion = session.contextoConversacion.slice(-10);
+      // Si no tiene threadId, crear uno nuevo
+      if (!session.threadId) {
+        session.threadId = await this.assistantService.createThread();
+        this.sessionService.updateSession(chatId, session);
       }
-      
-      this.sessionService.updateSession(chatId, session);
+  
+      // Procesar mensaje con Assistant
+      const respuesta = await this.assistantService.processMessage(session.threadId, mensaje);
       
       // Enviar respuesta al usuario
       await this.bot.sendMessage(chatId, respuesta, { parse_mode: 'Markdown' });
       
     } catch (error) {
-      console.error('❌ Error al procesar consulta con ChatGPT:', error);
+      console.error('❌ Error al procesar consulta con Assistant:', error);
       
       // Mensaje de error amigable
       await this.bot.sendMessage(
         chatId,
         '❌ Lo siento, tuve un problema al procesar tu consulta. Puedes intentar reformularla o usar los botones para consultar información específica.',
-        {
-          parse_mode: 'Markdown'
-        }
+        { parse_mode: 'Markdown' }
       );
     }
     
