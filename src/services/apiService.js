@@ -1,8 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
-class AxiosService {
+export class AxiosService {
   constructor(baseURL) {
     this.api = axios.create({
       baseURL,
@@ -14,7 +12,7 @@ class AxiosService {
   }
 
   async request(method, url, data = null, customHeaders = {}, options = {}) {
-    const headers = { ...this.defaultHeaders, ...customHeaders };
+    const headers = { ...customHeaders };
     const source = axios.CancelToken.source();
 
     const config = {
@@ -22,34 +20,34 @@ class AxiosService {
       url,
       headers,
       cancelToken: source.token,
-      data: null,
       ...options,
     };
 
     if (data) {
-      // config.data = data;
-      Object.assign(config, { data: data });
+      config.data = data;
     }
 
     try {
-      const response = await this.api(config)
+      const response = await this.api(config);
       return response.data;
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  // Manejo de errores
+  // Manejo de errores mejorado
   handleError(error) {
     if (error.response) {
-      console.error('Error en la respuesta:', error.response.data);
+      console.error('❌ Error en la respuesta:', error.response.status, error.response.data);
+      throw new Error(`Error en la respuesta: ${error.response.status}`);
     } else if (error.request) {
-      console.error('Error en la solicitud:', error.request);
+      console.error('❌ Error en la solicitud:', error.request);
+      throw new Error('Error de conexión. No se recibió respuesta del servidor.');
     } else {
-      console.error('Error:', error.message);
+      console.error('❌ Error:', error.message);
+      throw error;
     }
-    throw error;
   }
 }
 
-module.exports = AxiosService;
+export default AxiosService;

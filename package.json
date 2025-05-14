@@ -1,11 +1,13 @@
 {
   "name": "troya-soporte-tg-bot",
-  "version": "0.0.1",
-  "description": "Bot de telegram para soporte",
-  "main": "app.js",
+  "version": "0.1.0",
+  "description": "Bot de Telegram para seguimiento de expedientes",
+  "type": "module",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node app.js --trace-warnings"
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "lint": "eslint src/**/*.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,5 +16,8 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
   }
 }
