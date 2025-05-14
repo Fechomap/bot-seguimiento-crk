@@ -355,4 +355,3 @@ async function handleAccionMenu(chatId, usuario, tipo) {
   // Enviar la respuesta final con formato Markdown
   await bot.sendMessage(chatId, mensaje, { parse_mode: 'Markdown' });
 }
-//jonathan
