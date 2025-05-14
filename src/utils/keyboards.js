@@ -38,20 +38,6 @@ export function getSeguimientoKeyboard(expedienteData) {
 }
 
 /**
- * Genera un teclado de vuelta al menú principal
- * @returns {Object} - Objeto de configuración del teclado
- */
-export function getBackToMenuKeyboard() {
-  return {
-    keyboard: [
-      ['↩️ Volver al Menú']
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: false
-  };
-}
-
-/**
  * Elimina el teclado actual
  * @returns {Object} - Objeto de configuración para eliminar teclado
  */

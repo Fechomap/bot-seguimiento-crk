@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { formatCurrency, formatDateTime, hexToColorName } from '../utils/formatters.js';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
-import { getSeguimientoKeyboard, getBackToMenuKeyboard, getMainMenuKeyboard, removeKeyboard } from '../utils/keyboards.js';
+import { getSeguimientoKeyboard, getMainMenuKeyboard, removeKeyboard } from '../utils/keyboards.js';
 
 /**
  * Procesa la solicitud de número de expediente
@@ -47,7 +47,7 @@ export async function processExpedienteRequest(bot, chatId, usuario, mensaje, bo
       await bot.sendMessage(
         chatId, 
         '❌ Hubo un error al consultar la información. Por favor, intenta más tarde.',
-        { reply_markup: getBackToMenuKeyboard() }
+        { reply_markup: getMainMenuKeyboard() }
       );
     }
   } else {
@@ -117,26 +117,6 @@ export async function processMenuAction(bot, chatId, usuario, opcion, botService
           }
         );
         break;
-      case 'volver_menu':
-        // Mostrar nuevamente el menú de seguimiento con las opciones
-        if (usuario.datosExpediente) {
-          const detalles = formatExpedienteDetails(usuario.datosExpediente);
-          await bot.sendMessage(chatId, detalles, {
-            parse_mode: 'Markdown',
-            reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
-          });
-        } else {
-          await bot.sendMessage(
-            chatId, 
-            '🔄 Por favor, *ingresa el número de expediente* para continuar:',
-            { 
-              parse_mode: 'Markdown',
-              reply_markup: removeKeyboard()
-            }
-          );
-          usuario.etapa = 'esperando_numero_expediente';
-        }
-        break;
       default:
         await bot.sendMessage(chatId, 'ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.', {
           reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
@@ -148,7 +128,7 @@ export async function processMenuAction(bot, chatId, usuario, opcion, botService
     await bot.sendMessage(
       chatId, 
       '❌ Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getBackToMenuKeyboard() }
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );
   }
 }
@@ -211,14 +191,14 @@ async function handleCostoServicio(bot, chatId, expediente, usuario, botService)
 
     await bot.sendMessage(chatId, mensaje, {
       parse_mode: 'Markdown',
-      reply_markup: getBackToMenuKeyboard()
+      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
     });
   } catch (error) {
     console.error('❌ Error al obtener costo:', error);
     await bot.sendMessage(
       chatId,
       '❌ No se pudo obtener información sobre el costo del servicio. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getBackToMenuKeyboard() }
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );
   }
 }
@@ -259,14 +239,14 @@ async function handleDatosUnidad(bot, chatId, expediente, usuario, botService) {
 
     await bot.sendMessage(chatId, mensaje, {
       parse_mode: 'Markdown',
-      reply_markup: getBackToMenuKeyboard()
+      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
     });
   } catch (error) {
     console.error('❌ Error al obtener datos de unidad:', error);
     await bot.sendMessage(
       chatId,
       '❌ No se pudo obtener información sobre la unidad. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getBackToMenuKeyboard() }
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );
   }
 }
@@ -295,7 +275,7 @@ async function handleUbicacionTiempo(bot, chatId, expediente, usuario, botServic
 
     await bot.sendMessage(chatId, mensaje, {
       parse_mode: 'Markdown',
-      reply_markup: getBackToMenuKeyboard(),
+      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
       disable_web_page_preview: false // Permitir vista previa para el enlace
     });
   } catch (error) {
@@ -303,7 +283,7 @@ async function handleUbicacionTiempo(bot, chatId, expediente, usuario, botServic
     await bot.sendMessage(
       chatId,
       '❌ No se pudo obtener información sobre la ubicación. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getBackToMenuKeyboard() }
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );
   }
 }
@@ -326,14 +306,14 @@ async function handleTiempos(bot, chatId, expediente, usuario, botService) {
 
     await bot.sendMessage(chatId, mensaje, {
       parse_mode: 'Markdown',
-      reply_markup: getBackToMenuKeyboard()
+      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
     });
   } catch (error) {
     console.error('❌ Error al obtener tiempos:', error);
     await bot.sendMessage(
       chatId,
       '❌ No se pudo obtener información sobre los tiempos. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getBackToMenuKeyboard() }
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );
   }
 }

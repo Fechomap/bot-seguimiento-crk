@@ -109,15 +109,11 @@ async function handleMenuOption(bot, chatId, usuario, mensaje, botService) {
       await processMenuAction(bot, chatId, usuario, 'otro_expediente', botService);
       break;
       
-    case '↩️ Volver al Menú':
-      await processMenuAction(bot, chatId, usuario, 'volver_menu', botService);
-      break;
-      
     default:
       await bot.sendMessage(
         chatId,
         'ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.',
-        { reply_markup: getMainMenuKeyboard() }
+        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
       );
       break;
   }
