@@ -71,10 +71,10 @@ export async function processExpedienteRequest(bot, chatId, usuario, mensaje, bo
  */
 function formatExpedienteDetails(expedienteData) {
   return `🔍 *Detalles del Expediente*\n` +
+    `- ***ESTATUS: ${expedienteData.estatus || 'N/A'}***\n` +
+    `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n\n` +
     `- **Nombre:** ${expedienteData.nombre || 'N/A'}\n` +
     `- **Vehículo:** ${expedienteData.vehiculo || 'N/A'}\n` +
-    `- **Estatus:** ${expedienteData.estatus || 'N/A'}\n` +
-    `- **Servicio:** ${expedienteData.servicio || 'N/A'}\n` +
     `- **Destino:** ${expedienteData.destino || 'N/A'}\n\n` +
     `📋 *Selecciona una opción para ver más detalles:*`;
 }
