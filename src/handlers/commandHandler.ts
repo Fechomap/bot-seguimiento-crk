@@ -32,16 +32,13 @@ export function initUsuario(chatId: number, usuarios: Record<number, Usuario>): 
 }
 
 /**
- * Envía un mensaje de bienvenida sin teclado persistente
+ * Envía un mensaje de bienvenida directo
  */
 function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bot.sendMessage(
     chatId,
-    '👋 *¡Bienvenido al Sistema de Seguimiento de Expedientes!*\n\n' +
-    '📝 *Simplemente escribe tu número de expediente* y yo me encargo del resto.\n\n' +
-    '💡 *Ejemplos:* ABC123, 12345, EXP-789\n\n' +
-    '_¡Es así de fácil! No necesitas presionar botones._',
+    '👋 *¡Hola!*\n\n📝 Escribe tu número de expediente',
     {
       parse_mode: 'Markdown',
     }

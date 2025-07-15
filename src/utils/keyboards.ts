@@ -24,20 +24,22 @@ export function getSeguimientoKeyboard(
 ): ReplyKeyboardMarkup {
   const opciones: string[][] = [];
   
-  // Primera fila - Resumen Completo (NUEVO BOTÓN PRINCIPAL)
-  opciones.push(['📋 Resumen Completo']);
-  
-  // Segunda fila - Opciones principales
+  // Primera fila - Opciones principales
   opciones.push(['💰 Costo Total', '🚚 Unidad']);
   
-  // Tercera fila - Opciones contextuales
-  if (expedienteData?.estatus === 'A Contactar') {
+  // Segunda fila - Opciones contextuales según estatus
+  const estatusConUbicacion = ['A Contactar'];
+  const debeMostrarUbicacion = estatusConUbicacion.includes(expedienteData?.estatus || '');
+  
+  if (debeMostrarUbicacion) {
+    // Para servicios en tránsito: mostrar ubicación y tiempos
     opciones.push(['📍 Ubicación', '⏰ Tiempos']);
   } else {
+    // Para otros estatus: solo tiempos y estado
     opciones.push(['⏰ Tiempos', '📊 Estado']);
   }
   
-  // Cuarta fila - Acciones
+  // Tercera fila - Acciones
   opciones.push(['🔄 Otro Expediente']);
 
   return {

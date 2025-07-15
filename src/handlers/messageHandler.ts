@@ -137,10 +137,6 @@ async function handleMenuOption(
       );
       break;
 
-    case '📋 Resumen Completo':
-      await processMenuAction(bot, chatId, usuario, 'resumen_completo', botService);
-      break;
-
     case '🔄 Otro Expediente':
       await processMenuAction(bot, chatId, usuario, 'otro_expediente', botService);
       break;
