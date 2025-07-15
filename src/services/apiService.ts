@@ -1,7 +1,15 @@
-import axios from 'axios';
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosError,
+  Method,
+  CancelTokenSource,
+} from 'axios';
 
 export class AxiosService {
-  constructor(baseURL) {
+  private readonly api: AxiosInstance;
+
+  constructor(baseURL: string) {
     this.api = axios.create({
       baseURL,
       withCredentials: false,
@@ -11,11 +19,17 @@ export class AxiosService {
     });
   }
 
-  async request(method, url, data = null, customHeaders = {}, options = {}) {
+  async request<T = any>(
+    method: Method,
+    url: string,
+    data: any = null,
+    customHeaders: Record<string, string> = {},
+    options: Partial<AxiosRequestConfig> = {}
+  ): Promise<T> {
     const headers = { ...customHeaders };
-    const source = axios.CancelToken.source();
+    const source: CancelTokenSource = axios.CancelToken.source();
 
-    const config = {
+    const config: AxiosRequestConfig = {
       method,
       url,
       headers,
@@ -29,14 +43,14 @@ export class AxiosService {
 
     try {
       const response = await this.api(config);
-      return response.data;
+      return response.data as T;
     } catch (error) {
-      this.handleError(error);
+      return this.handleError(error as AxiosError);
     }
   }
 
   // Manejo de errores mejorado
-  handleError(error) {
+  private handleError(error: AxiosError): never {
     if (error.response) {
       console.error('❌ Error en la respuesta:', error.response.status, error.response.data);
       throw new Error(`Error en la respuesta: ${error.response.status}`);

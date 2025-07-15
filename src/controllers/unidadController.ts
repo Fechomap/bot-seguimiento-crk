@@ -1,34 +1,47 @@
-// src/controllers/unidadController.js
+import TelegramBot from 'node-telegram-bot-api';
 import { hexToColorName } from '../utils/formatters.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
+import type { Usuario } from '../types/index.js';
+import type { BotService } from '../services/botService.js';
 
 /**
  * Maneja la acción de consultar datos de la unidad
- * @param {TelegramBot} bot - Instancia del bot
- * @param {number} chatId - ID del chat
- * @param {string} expediente - Número de expediente
- * @param {Object} usuario - Estado del usuario
- * @param {BotService} botService - Servicio del bot
  */
-export async function handleDatosUnidad(bot, chatId, expediente, usuario, botService) {
+export async function handleDatosUnidad(
+  bot: TelegramBot,
+  chatId: number,
+  expediente: string,
+  usuario: Usuario,
+  botService: BotService
+): Promise<void> {
   try {
     const expedienteUnidad = await botService.obtenerExpedienteUnidadOp(expediente);
-    
+
+    if (!expedienteUnidad) {
+      await bot.sendMessage(
+        chatId,
+        '❌ No se encontró información de la unidad para este expediente.',
+        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
+      );
+      return;
+    }
+
     // Extraer el número económico y el tipo de grúa desde 'unidadOperativa'
     const unidadOperativa = expedienteUnidad.unidadOperativa || '';
     let numeroEconomico = unidadOperativa;
     let tipoGrua = expedienteUnidad.tipoGrua || 'N/A';
-    
+
     // Suponemos que 'unidadOperativa' tiene el formato "7 Plataforma Tipo A"
     const match = unidadOperativa.match(/^(\d+)\s*(.*)$/);
     if (match) {
-      numeroEconomico = match[1]; // Solo el número
-      if (match[2].trim().length > 0) {
+      numeroEconomico = match[1] || numeroEconomico; // Solo el número
+      const tipoMatch = match[2];
+      if (tipoMatch && tipoMatch.trim().length > 0) {
         // El tipo de grúa se tomará del texto adicional
-        tipoGrua = match[2].trim();
+        tipoGrua = tipoMatch.trim();
       }
     }
-    
+
     const mensaje = `🚚 *Datos de la Unidad o Grúa*
 - **Operador:** ${expedienteUnidad.operador || 'N/A'}
 - **Tipo de Grúa:** ${tipoGrua}
@@ -38,7 +51,7 @@ export async function handleDatosUnidad(bot, chatId, expediente, usuario, botSer
 
     await bot.sendMessage(chatId, mensaje, {
       parse_mode: 'Markdown',
-      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
+      reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
     });
   } catch (error) {
     console.error('❌ Error al obtener datos de unidad:', error);

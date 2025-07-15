@@ -3,9 +3,10 @@ import { getConfig } from './config/env.js';
 import { BotService } from './services/botService.js';
 import { registerCommands } from './handlers/commandHandler.js';
 import { registerMessageHandlers } from './handlers/messageHandler.js';
+import type { Usuario } from './types/index.js';
 
 // Inicialización
-console.log('🚀 Iniciando bot de Telegram...');
+console.info('🚀 Iniciando bot de Telegram...');
 
 // Cargar configuración
 const config = getConfig();
@@ -22,10 +23,10 @@ const botService = new BotService();
 
 // Crear la instancia del bot en modo polling
 const bot = new TelegramBot(TOKEN, { polling: true });
-console.log('✅ Bot conectado correctamente.');
+console.info('✅ Bot conectado correctamente.');
 
 // Objeto para almacenar el estado (sesión) de cada usuario
-const usuarios = {};
+const usuarios: Record<number, Usuario> = {};
 
 // Registrar manejadores
 registerCommands(bot, usuarios);
@@ -40,4 +41,4 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Rechazo no manejado en:', promise, 'Razón:', reason);
 });
 
-console.log('✅ Bot listo y escuchando mensajes.');
+console.info('✅ Bot listo y escuchando mensajes.');

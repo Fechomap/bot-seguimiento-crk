@@ -3,11 +3,22 @@
   "version": "0.1.0",
   "description": "Bot de Telegram para seguimiento de expedientes",
   "type": "module",
-  "main": "src/app.js",
+  "main": "dist/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "node --watch src/app.js",
-    "lint": "eslint src/**/*.js"
+    "build": "tsc",
+    "start": "node --loader ts-node/esm dist/app.js",
+    "dev": "nodemon --exec node --loader ts-node/esm src/app.ts",
+    "dev:build": "tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +29,24 @@
     "node-telegram-bot-api": "^0.66.0"
   },
   "devDependencies": {
-    "eslint": "^8.56.0"
+    "@jest/globals": "^30.0.4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.13",
+    "@types/node-telegram-bot-api": "^0.64.9",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "eslint-plugin-security": "^1.7.1",
+    "jest": "^30.0.4",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

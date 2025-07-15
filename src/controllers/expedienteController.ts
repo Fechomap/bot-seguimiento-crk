@@ -1,6 +1,8 @@
-// src/controllers/expedienteController.js
+import TelegramBot from 'node-telegram-bot-api';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
 import { getSeguimientoKeyboard, getMainMenuKeyboard, removeKeyboard } from '../utils/keyboards.js';
+import type { Usuario, DatosExpediente } from '../types/index.js';
+import type { BotService } from '../services/botService.js';
 
 // Importaciones de los controladores específicos
 import { handleCostoServicio } from './costoController.js';
@@ -10,24 +12,25 @@ import { handleTiempos } from './tiemposController.js';
 
 /**
  * Procesa la solicitud de número de expediente
- * @param {TelegramBot} bot - Instancia del bot
- * @param {number} chatId - ID del chat
- * @param {Object} usuario - Estado del usuario
- * @param {string} mensaje - Mensaje recibido
- * @param {BotService} botService - Servicio del bot
  */
-export async function processExpedienteRequest(bot, chatId, usuario, mensaje, botService) {
+export async function processExpedienteRequest(
+  bot: TelegramBot,
+  chatId: number,
+  usuario: Usuario,
+  mensaje: string,
+  botService: BotService
+): Promise<void> {
   // Sanitizar y validar entrada
   const expedienteInput = sanitizeInput(mensaje);
-  
+
   if (validateExpedienteNumber(expedienteInput)) {
     const expediente = expedienteInput;
-    console.log(`🔍 Buscando expediente: ${expediente}`);
+    console.info(`🔍 Buscando expediente: ${expediente}`);
 
     try {
       // Consulta del expediente a través del servicio
       const expedienteData = await botService.obtenerExpediente(expediente);
-      console.log(`📄 Registros encontrados:`, expedienteData);
+      console.info(`📄 Registros encontrados:`, expedienteData);
 
       if (expedienteData != null) {
         // Guardar datos del expediente en la sesión del usuario
@@ -39,18 +42,18 @@ export async function processExpedienteRequest(bot, chatId, usuario, mensaje, bo
         const detalles = formatExpedienteDetails(expedienteData);
         await bot.sendMessage(chatId, detalles, {
           parse_mode: 'Markdown',
-          reply_markup: getSeguimientoKeyboard(expedienteData)
+          reply_markup: getSeguimientoKeyboard(expedienteData),
         });
       } else {
         await bot.sendMessage(
-          chatId, 
+          chatId,
           '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
         );
       }
     } catch (error) {
       console.error('❌ Error:', error);
       await bot.sendMessage(
-        chatId, 
+        chatId,
         '❌ Hubo un error al consultar la información. Por favor, intenta más tarde.',
         { reply_markup: getMainMenuKeyboard() }
       );
@@ -66,34 +69,39 @@ export async function processExpedienteRequest(bot, chatId, usuario, mensaje, bo
 
 /**
  * Formatea los detalles del expediente para mostrarlos
- * @param {Object} expedienteData - Datos del expediente
- * @returns {string} - Texto formateado con detalles del expediente
  */
-function formatExpedienteDetails(expedienteData) {
-  return `🔍 *Detalles del Expediente*\n` +
+function formatExpedienteDetails(expedienteData: DatosExpediente): string {
+  return (
+    `🔍 *Detalles del Expediente*\n` +
     `- ***ESTATUS: ${expedienteData.estatus || 'N/A'}***\n` +
     `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n\n` +
     `- **Nombre:** ${expedienteData.nombre || 'N/A'}\n` +
     `- **Vehículo:** ${expedienteData.vehiculo || 'N/A'}\n` +
     `- **Destino:** ${expedienteData.destino || 'N/A'}\n\n` +
-    `📋 *Selecciona una opción para ver más detalles:*`;
+    `📋 *Selecciona una opción para ver más detalles:*`
+  );
 }
 
 /**
  * Procesa las acciones de menú seleccionadas
- * @param {TelegramBot} bot - Instancia del bot
- * @param {number} chatId - ID del chat
- * @param {Object} usuario - Estado del usuario
- * @param {string} opcion - Opción seleccionada o código de acción
- * @param {BotService} botService - Servicio del bot
  */
-export async function processMenuAction(bot, chatId, usuario, opcion, botService) {
-  const expediente = usuario.expediente;
-  
+export async function processMenuAction(
+  bot: TelegramBot,
+  chatId: number,
+  usuario: Usuario,
+  opcion: string,
+  botService: BotService
+): Promise<void> {
+  const { expediente } = usuario;
+
   if (!expediente) {
-    await bot.sendMessage(chatId, '❌ No hay expediente activo. Por favor inicia una nueva consulta.', {
-      reply_markup: getMainMenuKeyboard()
-    });
+    await bot.sendMessage(
+      chatId,
+      '❌ No hay expediente activo. Por favor inicia una nueva consulta.',
+      {
+        reply_markup: getMainMenuKeyboard(),
+      }
+    );
     return;
   }
 
@@ -114,24 +122,28 @@ export async function processMenuAction(bot, chatId, usuario, opcion, botService
       case 'otro_expediente':
         usuario.etapa = 'esperando_numero_expediente';
         await bot.sendMessage(
-          chatId, 
+          chatId,
           '🔄 Por favor, *ingresa el número de otro expediente* para continuar:',
-          { 
+          {
             parse_mode: 'Markdown',
-            reply_markup: removeKeyboard()
+            reply_markup: removeKeyboard(),
           }
         );
         break;
       default:
-        await bot.sendMessage(chatId, 'ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.', {
-          reply_markup: getSeguimientoKeyboard(usuario.datosExpediente)
-        });
+        await bot.sendMessage(
+          chatId,
+          'ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.',
+          {
+            reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+          }
+        );
         break;
     }
   } catch (error) {
     console.error('❌ Error en processMenuAction:', error);
     await bot.sendMessage(
-      chatId, 
+      chatId,
       '❌ Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde.',
       { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );

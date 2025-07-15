@@ -1,23 +1,69 @@
-# Node modules
+# Dependencies
 node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# Dependency directories
-jspm_packages/
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output/
 
 # Optional npm cache directory
 .npm
 
-# dotenv environment files
-.env
-.env.*.local
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# VS Code settings
+# IDE settings
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jest coverage
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
