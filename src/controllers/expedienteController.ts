@@ -49,7 +49,7 @@ export async function processExpedienteRequest(
       // Ejecutar animación mientras se hace la consulta
       const animationPromise = (async () => {
         for (let i = 0; i < loadingSteps.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 700)); // Pausa más rápida para mejor fluidez
+          await new Promise(resolve => setTimeout(resolve, 300)); // Animación súper rápida
           try {
             const currentStep = loadingSteps[i];
             if (loadingMessage.message_id && currentStep) {
@@ -85,7 +85,7 @@ export async function processExpedienteRequest(
       }
 
       // Pausa breve para que el usuario vea el mensaje de éxito
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       if (expedienteCompleto?.expediente) {
         // Guardar datos completos en la sesión del usuario
