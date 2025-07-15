@@ -11,6 +11,7 @@ export interface Usuario {
   etapa: 'initial' | 'esperando_numero_expediente' | 'menu_seguimiento';
   expediente?: string;
   datosExpediente?: DatosExpediente;
+  expedienteCompleto?: ExpedienteCompleto;
 }
 
 export interface DatosExpediente {
@@ -76,6 +77,21 @@ export interface ExpedienteTiempos {
   porcentajeAvance?: number;
   tc?: string; // Tiempo de contacto
   tt?: string; // Tiempo de término
+}
+
+export interface ExpedienteCompleto {
+  expediente: DatosExpediente;
+  costo?: ExpedienteCosto;
+  unidad?: ExpedienteUnidad;
+  ubicacion?: ExpedienteUbicacion;
+  tiempos?: ExpedienteTiempos;
+  fechaConsulta: Date;
+}
+
+export interface CacheEntry {
+  data: ExpedienteCompleto;
+  timestamp: number;
+  ttl: number; // Time to live en milisegundos
 }
 
 // Tipos para los handlers

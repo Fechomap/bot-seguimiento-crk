@@ -4,7 +4,7 @@ import {
   processExpedienteRequest,
   processMenuAction,
 } from '../controllers/expedienteController.js';
-import { getMainMenuKeyboard, getSeguimientoKeyboard } from '../utils/keyboards.js';
+import { getSeguimientoKeyboard } from '../utils/keyboards.js';
 import type { Usuario } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -35,68 +35,7 @@ export function registerMessageHandlers(
     // Detectar si el usuario ingresó directamente un número de expediente
     const posibleExpediente = mensaje.match(/^[a-zA-Z0-9\s-]+$/);
     
-    // Manejar botones del menú principal
-    if (mensaje === '📊 Consultar Expediente') {
-      usuario.etapa = 'esperando_numero_expediente';
-      await bot.sendMessage(
-        chatId,
-        '🔍 *Ingresa tu número de expediente*\n\n' +
-        '_Ejemplo: ABC123, 12345, EXP-789_',
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-            keyboard: [['\u2b05️ Volver al Menú']] as any,
-            resize_keyboard: true,
-            one_time_keyboard: false,
-          },
-        }
-      );
-      return;
-    }
-    
-    if (mensaje === '📱 Mis Expedientes Recientes') {
-      await bot.sendMessage(
-        chatId,
-        '📱 *Expedientes Recientes*\n\n' +
-        '_Esta función estará disponible próximamente._\n\n' +
-        'Por ahora, puedes consultar tus expedientes uno por uno.',
-        {
-          parse_mode: 'Markdown',
-          reply_markup: getMainMenuKeyboard(),
-        }
-      );
-      return;
-    }
-    
-    if (mensaje === '❓ Ayuda') {
-      await bot.sendMessage(
-        chatId,
-        '🤖 *¿Cómo puedo ayudarte?*\n\n' +
-        '📌 *Formas de usar el bot:*\n' +
-        '1️⃣ Presiona "Consultar Expediente"\n' +
-        '2️⃣ O escribe directamente tu expediente\n\n' +
-        '💡 *Tip:* Puedo recordar tu último expediente consultado',
-        {
-          parse_mode: 'Markdown',
-          reply_markup: getMainMenuKeyboard(),
-        }
-      );
-      return;
-    }
-    
-    if (mensaje === '⬅️ Volver al Menú') {
-      usuario.etapa = 'initial';
-      await bot.sendMessage(
-        chatId,
-        '🏠 *Menú Principal*\n\n¿Qué deseas hacer?',
-        {
-          parse_mode: 'Markdown',
-          reply_markup: getMainMenuKeyboard(),
-        }
-      );
-      return;
-    }
+    // Simplificado: solo detección automática de expedientes
     
     // En función de la etapa en que se encuentre el usuario
     switch (usuario.etapa) {
@@ -108,42 +47,17 @@ export function registerMessageHandlers(
           await bot.sendMessage(
             chatId,
             '🤔 No entendí tu mensaje.\n\n' +
-            'Puedes:\n' +
-            '• Escribir tu número de expediente\n' +
-            '• Usar los botones del menú',
+            '📝 Simplemente escribe tu número de expediente\n' +
+            '_Ejemplo: ABC123, 12345, EXP-789_',
             {
               parse_mode: 'Markdown',
-              reply_markup: getMainMenuKeyboard(),
             }
           );
         }
         break;
 
       case 'esperando_numero_expediente':
-        // Manejar botones especiales
-        if (mensaje === '⬅️ Volver') {
-          usuario.etapa = 'menu_seguimiento';
-          await bot.sendMessage(
-            chatId,
-            `📋 Expediente actual: *${usuario.expediente}*\n\n¿Qué información necesitas?`,
-            {
-              parse_mode: 'Markdown',
-              reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
-            }
-          );
-        } else if (mensaje === '🏠 Menú Principal') {
-          usuario.etapa = 'initial';
-          await bot.sendMessage(
-            chatId,
-            '🏠 *Menú Principal*\n\n¿Qué deseas hacer?',
-            {
-              parse_mode: 'Markdown',
-              reply_markup: getMainMenuKeyboard(),
-            }
-          );
-        } else {
-          await processExpedienteRequest(bot, chatId, usuario, mensaje, botService);
-        }
+        await processExpedienteRequest(bot, chatId, usuario, mensaje, botService);
         break;
 
       case 'menu_seguimiento':
@@ -223,20 +137,12 @@ async function handleMenuOption(
       );
       break;
 
+    case '📋 Resumen Completo':
+      await processMenuAction(bot, chatId, usuario, 'resumen_completo', botService);
+      break;
+
     case '🔄 Otro Expediente':
       await processMenuAction(bot, chatId, usuario, 'otro_expediente', botService);
-      break;
-      
-    case '🏠 Menú Principal':
-      usuario.etapa = 'initial';
-      await bot.sendMessage(
-        chatId,
-        '🏠 *Menú Principal*\n\n¿Qué deseas hacer?',
-        {
-          parse_mode: 'Markdown',
-          reply_markup: getMainMenuKeyboard(),
-        }
-      );
       break;
 
     default:

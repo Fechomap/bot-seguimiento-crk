@@ -9,7 +9,7 @@ export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     keyboard: [
       ['📊 Consultar Expediente'],
-      ['📱 Mis Expedientes Recientes', '❓ Ayuda']
+      ['❓ Ayuda']
     ] as any,
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -24,18 +24,21 @@ export function getSeguimientoKeyboard(
 ): ReplyKeyboardMarkup {
   const opciones: string[][] = [];
   
-  // Primera fila - Opciones principales
+  // Primera fila - Resumen Completo (NUEVO BOTÓN PRINCIPAL)
+  opciones.push(['📋 Resumen Completo']);
+  
+  // Segunda fila - Opciones principales
   opciones.push(['💰 Costo Total', '🚚 Unidad']);
   
-  // Segunda fila - Opciones contextuales
+  // Tercera fila - Opciones contextuales
   if (expedienteData?.estatus === 'A Contactar') {
     opciones.push(['📍 Ubicación', '⏰ Tiempos']);
   } else {
     opciones.push(['⏰ Tiempos', '📊 Estado']);
   }
   
-  // Tercera fila - Acciones
-  opciones.push(['🔄 Otro Expediente', '🏠 Menú Principal']);
+  // Cuarta fila - Acciones
+  opciones.push(['🔄 Otro Expediente']);
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any

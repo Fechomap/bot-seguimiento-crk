@@ -1,5 +1,4 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { getMainMenuKeyboard } from '../utils/keyboards.js';
 import type { Usuario } from '../types/index.js';
 
 /**
@@ -33,20 +32,18 @@ export function initUsuario(chatId: number, usuarios: Record<number, Usuario>): 
 }
 
 /**
- * Envía un mensaje de bienvenida con el menú principal
+ * Envía un mensaje de bienvenida sin teclado persistente
  */
 function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bot.sendMessage(
     chatId,
     '👋 *¡Bienvenido al Sistema de Seguimiento de Expedientes!*\n\n' +
-    '📋 *¿Qué necesitas hacer?*\n' +
-    '• Presiona el botón para consultar tu expediente\n' +
-    '• Ingresa directamente tu número de expediente\n\n' +
-    '_Estoy aquí para ayudarte con toda la información de tu servicio._',
+    '📝 *Simplemente escribe tu número de expediente* y yo me encargo del resto.\n\n' +
+    '💡 *Ejemplos:* ABC123, 12345, EXP-789\n\n' +
+    '_¡Es así de fácil! No necesitas presionar botones._',
     {
       parse_mode: 'Markdown',
-      reply_markup: getMainMenuKeyboard(),
     }
   );
 }
@@ -58,13 +55,13 @@ function sendHelpMessage(bot: TelegramBot, chatId: number): void {
   const helpMessage =
     '🤖 *Ayuda del Bot de Seguimiento*\n\n' +
     '📌 *¿Cómo funciona?*\n' +
-    '1️⃣ Ingresa tu número de expediente\n' +
-    '2️⃣ Consulta la información que necesites\n' +
-    '3️⃣ Cambia de expediente cuando quieras\n\n' +
+    '1️⃣ Escribe tu número de expediente\n' +
+    '2️⃣ El bot carga toda la información automáticamente\n' +
+    '3️⃣ Usa "📋 Resumen Completo" para ver todo de una vez\n\n' +
     '💡 *Tips:*\n' +
-    '• Puedes escribir tu expediente directamente\n' +
-    '• Usa los botones para navegar fácilmente\n' +
-    '• El bot recuerda tu último expediente\n\n' +
+    '• No necesitas botones, solo escribe el expediente\n' +
+    '• La información se carga instantáneamente\n' +
+    '• Puedes consultar diferentes expedientes cuando quieras\n\n' +
     '*Comandos:*\n' +
     '/start - Reiniciar conversación\n' +
     '/help - Ver esta ayuda';
@@ -72,6 +69,5 @@ function sendHelpMessage(bot: TelegramBot, chatId: number): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bot.sendMessage(chatId, helpMessage, {
     parse_mode: 'Markdown',
-    reply_markup: getMainMenuKeyboard(),
   });
 }
