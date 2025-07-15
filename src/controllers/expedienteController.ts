@@ -29,15 +29,63 @@ export async function processExpedienteRequest(
     console.info(`🔍 Buscando expediente: ${expediente}`);
 
     try {
-      // Mostrar mensaje de carga
-      await bot.sendMessage(
+      // Mostrar animación de carga con emojis dinámicos
+      const loadingMessage = await bot.sendMessage(
         chatId,
-        '🔄 *Consultando expediente...*\n\n_Estoy obteniendo toda la información disponible. Esto tomará solo unos segundos._',
+        '⏳ *Consultando expediente...*\n\n_Iniciando búsqueda..._',
         { parse_mode: 'Markdown' }
       );
 
-      // ✨ NUEVA FUNCIONALIDAD: Pre-carga completa automática
-      const expedienteCompleto = await botService.obtenerExpedienteCompleto(expediente);
+      // Animación con emojis que sugieren progreso y movimiento
+      const loadingSteps = [
+        '🔍 *Buscando expediente...*\n\n_Validando número..._',
+        '🌍 *Conectando...*\n\n_Accediendo al sistema..._',
+        '📡 *Transmitiendo...*\n\n_Enviando consulta..._',
+        '💫 *Procesando...*\n\n_Obteniendo información..._',
+        '📊 *Compilando datos...*\n\n_Organizando resultados..._',
+        '🎯 *Finalizando...*\n\n_¡Ya casi está listo!_'
+      ];
+
+      // Ejecutar animación mientras se hace la consulta
+      const animationPromise = (async () => {
+        for (let i = 0; i < loadingSteps.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 700)); // Pausa más rápida para mejor fluidez
+          try {
+            const currentStep = loadingSteps[i];
+            if (loadingMessage.message_id && currentStep) {
+              await bot.editMessageText(currentStep, {
+                chat_id: chatId,
+                message_id: loadingMessage.message_id,
+                parse_mode: 'Markdown'
+              });
+            }
+          } catch (error) {
+            // Ignorar errores de edición (mensaje puede haber sido editado muy rápido)
+            console.warn('Animación: salto de frame');
+          }
+        }
+      })();
+
+      // ✨ NUEVA FUNCIONALIDAD: Pre-carga completa automática en paralelo con animación
+      const [expedienteCompleto] = await Promise.all([
+        botService.obtenerExpedienteCompleto(expediente),
+        animationPromise
+      ]);
+
+      // Mensaje final de éxito con emoji celebrativo
+      if (loadingMessage.message_id) {
+        await bot.editMessageText(
+          '🎉 *¡Expediente encontrado!*\n\n✨ _Información completa cargada y lista._',
+          {
+            chat_id: chatId,
+            message_id: loadingMessage.message_id,
+            parse_mode: 'Markdown'
+          }
+        );
+      }
+
+      // Pausa breve para que el usuario vea el mensaje de éxito
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (expedienteCompleto?.expediente) {
         // Guardar datos completos en la sesión del usuario
