@@ -61,7 +61,14 @@ export function registerMessageHandlers(
         break;
 
       case 'menu_seguimiento':
-        await handleMenuOption(bot, chatId, usuario, mensaje, botService); // eslint-disable-line @typescript-eslint/no-use-before-define
+        // Si parece un expediente, resetear y consultar nuevo expediente
+        if (posibleExpediente && mensaje.length >= 3) {
+          // eslint-disable-next-line no-param-reassign
+          usuario.etapa = 'initial';
+          await processExpedienteRequest(bot, chatId, usuario, mensaje, botService);
+        } else {
+          await handleMenuOption(bot, chatId, usuario, mensaje, botService); // eslint-disable-line @typescript-eslint/no-use-before-define
+        }
         break;
 
       default:
@@ -137,9 +144,6 @@ async function handleMenuOption(
       );
       break;
 
-    case '🔄 Otro Expediente':
-      await processMenuAction(bot, chatId, usuario, 'otro_expediente', botService);
-      break;
 
     default:
       await bot.sendMessage(

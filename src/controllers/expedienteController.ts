@@ -49,7 +49,7 @@ export async function processExpedienteRequest(
       // Ejecutar animación mientras se hace la consulta
       const animationPromise = (async () => {
         for (let i = 0; i < loadingSteps.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 300)); // Animación súper rápida
+          await new Promise(resolve => setTimeout(resolve, 100)); // Animación más rápida
           try {
             const currentStep = loadingSteps[i];
             if (loadingMessage.message_id && currentStep) {
@@ -72,22 +72,21 @@ export async function processExpedienteRequest(
         animationPromise
       ]);
 
-      // Mensaje final de éxito con emoji celebrativo
-      if (loadingMessage.message_id) {
-        await bot.editMessageText(
-          '🎉 *¡Expediente encontrado!*\n\n✨ _Información completa cargada y lista._',
-          {
-            chat_id: chatId,
-            message_id: loadingMessage.message_id,
-            parse_mode: 'Markdown'
-          }
-        );
-      }
-
-      // Pausa breve para que el usuario vea el mensaje de éxito
-      await new Promise(resolve => setTimeout(resolve, 300));
-
       if (expedienteCompleto?.expediente) {
+        // Mensaje final de éxito con emoji celebrativo
+        if (loadingMessage.message_id) {
+          await bot.editMessageText(
+            '🎉 *¡Expediente encontrado!*\n\n✨ _Información completa cargada y lista._',
+            {
+              chat_id: chatId,
+              message_id: loadingMessage.message_id,
+              parse_mode: 'Markdown'
+            }
+          );
+        }
+
+        // Pausa breve para que el usuario vea el mensaje de éxito
+        await new Promise(resolve => setTimeout(resolve, 100));
         // Guardar datos completos en la sesión del usuario
         // eslint-disable-next-line no-param-reassign
         usuario.datosExpediente = expedienteCompleto.expediente;
@@ -117,10 +116,22 @@ export async function processExpedienteRequest(
 
 
       } else {
-        await bot.sendMessage(
-          chatId,
-          '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
-        );
+        // Mensaje final de error cuando no se encuentra el expediente
+        if (loadingMessage.message_id) {
+          await bot.editMessageText(
+            '❌ *Expediente no encontrado*\n\n_El número ingresado no existe o no se encontró información._',
+            {
+              chat_id: chatId,
+              message_id: loadingMessage.message_id,
+              parse_mode: 'Markdown'
+            }
+          );
+        } else {
+          await bot.sendMessage(
+            chatId,
+            '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
+          );
+        }
       }
     } catch (error) {
       console.error('❌ Error:', error);
@@ -183,18 +194,6 @@ export async function processMenuAction(
         break;
       case 'tiempos':
         await handleTiempos(bot, chatId, expediente, usuario, botService);
-        break;
-      case 'otro_expediente':
-        // eslint-disable-next-line no-param-reassign
-        usuario.etapa = 'initial';
-        await bot.sendMessage(
-          chatId,
-          '🔄 *Consultar otro expediente*\n\n' +
-          '📝 Escribe el número del nuevo expediente:',
-          {
-            parse_mode: 'Markdown',
-          }
-        );
         break;
       default:
         await bot.sendMessage(

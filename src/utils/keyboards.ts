@@ -39,8 +39,6 @@ export function getSeguimientoKeyboard(
     opciones.push(['⏰ Tiempos', '📊 Estado']);
   }
   
-  // Tercera fila - Acciones
-  opciones.push(['🔄 Otro Expediente']);
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
