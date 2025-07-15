@@ -39,7 +39,11 @@ function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bot.sendMessage(
     chatId,
-    '👋 *¡Bienvenido al sistema de atención al cliente!*\n\nPor favor, selecciona una opción para continuar:',
+    '👋 *¡Bienvenido al Sistema de Seguimiento de Expedientes!*\n\n' +
+    '📋 *¿Qué necesitas hacer?*\n' +
+    '• Presiona el botón para consultar tu expediente\n' +
+    '• Ingresa directamente tu número de expediente\n\n' +
+    '_Estoy aquí para ayudarte con toda la información de tu servicio._',
     {
       parse_mode: 'Markdown',
       reply_markup: getMainMenuKeyboard(),
@@ -52,11 +56,18 @@ function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
  */
 function sendHelpMessage(bot: TelegramBot, chatId: number): void {
   const helpMessage =
-    '*Ayuda del Bot de Seguimiento*\n\n' +
-    'Este bot te permite consultar información sobre tu expediente de servicio.\n\n' +
-    '*Comandos disponibles:*\n' +
-    '/start - Iniciar o reiniciar el bot\n' +
-    '/help - Mostrar este mensaje de ayuda';
+    '🤖 *Ayuda del Bot de Seguimiento*\n\n' +
+    '📌 *¿Cómo funciona?*\n' +
+    '1️⃣ Ingresa tu número de expediente\n' +
+    '2️⃣ Consulta la información que necesites\n' +
+    '3️⃣ Cambia de expediente cuando quieras\n\n' +
+    '💡 *Tips:*\n' +
+    '• Puedes escribir tu expediente directamente\n' +
+    '• Usa los botones para navegar fácilmente\n' +
+    '• El bot recuerda tu último expediente\n\n' +
+    '*Comandos:*\n' +
+    '/start - Reiniciar conversación\n' +
+    '/help - Ver esta ayuda';
 
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bot.sendMessage(chatId, helpMessage, {

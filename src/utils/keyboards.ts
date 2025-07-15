@@ -7,7 +7,10 @@ import type { DatosExpediente } from '../types/index.js';
 export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    keyboard: [['📊 Seguimiento de Expediente']] as any,
+    keyboard: [
+      ['📊 Consultar Expediente'],
+      ['📱 Mis Expedientes Recientes', '❓ Ayuda']
+    ] as any,
     resize_keyboard: true,
     one_time_keyboard: false,
   };
@@ -19,15 +22,20 @@ export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
 export function getSeguimientoKeyboard(
   expedienteData: DatosExpediente | undefined
 ): ReplyKeyboardMarkup {
-  const opciones: string[][] = [['💰 Costo del Servicio', '🚚 Datos de la Unidad']];
-
-  // Agregar opción de ubicación si el estatus es "A Contactar"
+  const opciones: string[][] = [];
+  
+  // Primera fila - Opciones principales
+  opciones.push(['💰 Costo Total', '🚚 Unidad']);
+  
+  // Segunda fila - Opciones contextuales
   if (expedienteData?.estatus === 'A Contactar') {
-    opciones.push(['📍 Ubicación y Tiempo Restante']);
+    opciones.push(['📍 Ubicación', '⏰ Tiempos']);
+  } else {
+    opciones.push(['⏰ Tiempos', '📊 Estado']);
   }
-
-  // Agregar opciones adicionales
-  opciones.push(['⏰ Tiempos', '🔄 Consultar otro Expediente']);
+  
+  // Tercera fila - Acciones
+  opciones.push(['🔄 Otro Expediente', '🏠 Menú Principal']);
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any

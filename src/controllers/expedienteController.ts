@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
-import { getSeguimientoKeyboard, getMainMenuKeyboard, removeKeyboard } from '../utils/keyboards.js';
+import { getSeguimientoKeyboard, getMainMenuKeyboard } from '../utils/keyboards.js';
 import type { Usuario, DatosExpediente } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -127,10 +127,16 @@ export async function processMenuAction(
         usuario.etapa = 'esperando_numero_expediente';
         await bot.sendMessage(
           chatId,
-          '🔄 Por favor, *ingresa el número de otro expediente* para continuar:',
+          '🔄 *Consultar otro expediente*\n\n' +
+          '📝 Ingresa el número del nuevo expediente:',
           {
             parse_mode: 'Markdown',
-            reply_markup: removeKeyboard(),
+            reply_markup: {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+              keyboard: [['⬅️ Volver', '🏠 Menú Principal']] as any,
+              resize_keyboard: true,
+              one_time_keyboard: false,
+            },
           }
         );
         break;
