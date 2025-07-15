@@ -5,6 +5,7 @@ import {
   processMenuAction,
 } from '../controllers/expedienteController.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
+import { getStatusColor } from '../utils/formatters.js';
 import type { Usuario } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -31,12 +32,12 @@ export function registerMessageHandlers(
     }
 
     const usuario = usuarios[chatId]!;
-    
+
     // Detectar si el usuario ingresó directamente un número de expediente
     const posibleExpediente = mensaje.match(/^[a-zA-Z0-9\s-]+$/);
-    
+
     // Simplificado: solo detección automática de expedientes
-    
+
     // En función de la etapa en que se encuentre el usuario
     switch (usuario.etapa) {
       case 'initial':
@@ -47,8 +48,8 @@ export function registerMessageHandlers(
           await bot.sendMessage(
             chatId,
             '🤔 No entendí tu mensaje.\n\n' +
-            '📝 Simplemente escribe tu número de expediente\n' +
-            '_Ejemplo: ABC123, 12345, EXP-789_',
+              '📝 Simplemente escribe tu número de expediente\n' +
+              '_Ejemplo: ABC123, 12345, EXP-789_',
             {
               parse_mode: 'Markdown',
             }
@@ -112,38 +113,22 @@ async function handleMenuOption(
     case '⏰ Tiempos':
       await processMenuAction(bot, chatId, usuario, 'tiempos', botService);
       break;
-      
-    case '📊 Estado':
-      const getStatusInfo = (status: string): string => {
-        switch (status) {
-          case 'En Proceso':
-            return '🔄 Tu servicio está rumbo a destino';
-          case 'A Contactar':
-            return '📞 Nos comunicaremos contigo pronto\n\n_Nuestro equipo se pondrá en contacto para coordinar el servicio._';
-          case 'Finalizado':
-            return '✅ Servicio completado exitosamente\n\n_Tu servicio ha sido finalizado. ¡Gracias por confiar en nosotros!_';
-          case 'Cancelado':
-            return '❌ El servicio ha sido cancelado\n\n_Si tienes dudas, contacta a nuestro servicio al cliente._';
-          case 'Pendiente':
-            return '⏳ En espera de confirmación\n\n_Estamos procesando tu solicitud._';
-          default:
-            return '📋 Estado actualizado en tiempo real';
-        }
-      };
+
+    case '📊 Estado': {
+      const statusColor = getStatusColor(usuario.datosExpediente?.estatus);
 
       await bot.sendMessage(
         chatId,
         `📊 *Estado del Expediente*\n\n` +
-        `📋 Número: *${usuario.expediente}*\n` +
-        `📊 Estado: ***${usuario.datosExpediente?.estatus || 'N/A'}***\n\n` +
-        `${getStatusInfo(usuario.datosExpediente?.estatus || '')}`,
+          `📋 Número: *${usuario.expediente}*\n` +
+          `Estado: ***${statusColor}${usuario.datosExpediente?.estatus || 'N/A'}***`,
         {
           parse_mode: 'Markdown',
           reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
         }
       );
       break;
-
+    }
 
     default:
       await bot.sendMessage(

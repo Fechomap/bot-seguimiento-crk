@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import { formatCurrency, formatDateTime, hexToColorName } from '../utils/formatters.js';
+import { formatCurrency, formatDateTime, hexToColorName, getStatusColor } from '../utils/formatters.js';
 import type { Usuario, DatosExpediente, ExpedienteCompleto } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -43,20 +43,25 @@ export async function processExpedienteRequest(
         '📡 *Transmitiendo...*\n\n_Enviando consulta..._',
         '💫 *Procesando...*\n\n_Obteniendo información..._',
         '📊 *Compilando datos...*\n\n_Organizando resultados..._',
-        '🎯 *Finalizando...*\n\n_¡Ya casi está listo!_'
+        '🎯 *Finalizando...*\n\n_¡Ya casi está listo!_',
       ];
 
       // Ejecutar animación mientras se hace la consulta
       const animationPromise = (async () => {
-        for (let i = 0; i < loadingSteps.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 100)); // Animación más rápida
+        // eslint-disable-next-line no-await-in-loop
+        for (let i = 0; i < loadingSteps.length; i += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 100); // Animación más rápida
+          });
           try {
             const currentStep = loadingSteps[i];
             if (loadingMessage.message_id && currentStep) {
+              // eslint-disable-next-line no-await-in-loop
               await bot.editMessageText(currentStep, {
                 chat_id: chatId,
                 message_id: loadingMessage.message_id,
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
               });
             }
           } catch (error) {
@@ -69,7 +74,7 @@ export async function processExpedienteRequest(
       // ✨ NUEVA FUNCIONALIDAD: Pre-carga completa automática en paralelo con animación
       const [expedienteCompleto] = await Promise.all([
         botService.obtenerExpedienteCompleto(expediente),
-        animationPromise
+        animationPromise,
       ]);
 
       if (expedienteCompleto?.expediente) {
@@ -80,13 +85,15 @@ export async function processExpedienteRequest(
             {
               chat_id: chatId,
               message_id: loadingMessage.message_id,
-              parse_mode: 'Markdown'
+              parse_mode: 'Markdown',
             }
           );
         }
 
         // Pausa breve para que el usuario vea el mensaje de éxito
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
         // Guardar datos completos en la sesión del usuario
         // eslint-disable-next-line no-param-reassign
         usuario.datosExpediente = expedienteCompleto.expediente;
@@ -105,33 +112,25 @@ export async function processExpedienteRequest(
         });
 
         // Enviar automáticamente el resumen completo
-        const resumenCompleto = await generateResumenCompleto(expedienteCompleto, expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
-        await bot.sendMessage(
-          chatId,
-          resumenCompleto,
+        const resumenCompleto = generateResumenCompleto(expedienteCompleto, expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
+        await bot.sendMessage(chatId, resumenCompleto, {
+          parse_mode: 'Markdown',
+        });
+      } else if (loadingMessage.message_id) {
+        // Mensaje final de error cuando no se encuentra el expediente
+        await bot.editMessageText(
+          '❌ *Expediente no encontrado*\n\n_El número ingresado no existe o no se encontró información._',
           {
+            chat_id: chatId,
+            message_id: loadingMessage.message_id,
             parse_mode: 'Markdown',
           }
         );
-
-
       } else {
-        // Mensaje final de error cuando no se encuentra el expediente
-        if (loadingMessage.message_id) {
-          await bot.editMessageText(
-            '❌ *Expediente no encontrado*\n\n_El número ingresado no existe o no se encontró información._',
-            {
-              chat_id: chatId,
-              message_id: loadingMessage.message_id,
-              parse_mode: 'Markdown'
-            }
-          );
-        } else {
-          await bot.sendMessage(
-            chatId,
-            '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
-          );
-        }
+        await bot.sendMessage(
+          chatId,
+          '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
+        );
       }
     } catch (error) {
       console.error('❌ Error:', error);
@@ -153,9 +152,11 @@ export async function processExpedienteRequest(
  * Formatea los detalles del expediente para mostrarlos
  */
 function formatExpedienteDetails(expedienteData: DatosExpediente): string {
+  const statusColor = getStatusColor(expedienteData.estatus);
+  
   return (
     `🔍 *Detalles del Expediente*\n` +
-    `- ***ESTATUS: ${expedienteData.estatus || 'N/A'}***\n` +
+    `- ***ESTATUS: ${statusColor}${expedienteData.estatus || 'N/A'}***\n` +
     `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n\n` +
     `- **Vehículo:** ${expedienteData.vehiculo || 'N/A'}`
   );
@@ -215,25 +216,24 @@ export async function processMenuAction(
   }
 }
 
-
 /**
  * Genera un resumen completo del expediente combinando toda la información
  */
-async function generateResumenCompleto(
+function generateResumenCompleto(
   expedienteCompleto: ExpedienteCompleto,
   numeroExpediente: string
-): Promise<string> {
+): string {
   const { expediente, costo, unidad, ubicacion, tiempos } = expedienteCompleto;
-  
+
   // Encabezado del resumen
   let resumen = `📋 *RESUMEN COMPLETO DEL EXPEDIENTE*\n\n`;
-  
+
   // ===== INFORMACIÓN GENERAL =====
   resumen += `🔍 *Detalles Generales*\n`;
   resumen += `- ***EXPEDIENTE: ${numeroExpediente}***\n`;
   resumen += `- **Nombre:** ${expediente.nombre || 'N/A'}\n`;
   resumen += `- **Destino:** ${expediente.destino || 'N/A'}\n\n`;
-  
+
   // ===== INFORMACIÓN DE COSTOS =====
   resumen += `💰 *Costo del Servicio*\n`;
   if (costo) {
@@ -250,7 +250,7 @@ async function generateResumenCompleto(
       } else {
         resumen += `- **Desglose:** ${costo.km || 'N/A'} km, plano ${costo.plano || 'N/A'}\n`;
       }
-      
+
       // Desgloses adicionales (solo si > 0)
       if (costo.casetaACobro && costo.casetaACobro > 0) {
         resumen += `- **Caseta de Cobro:** ${formatCurrency(costo.casetaACobro)}\n`;
@@ -276,21 +276,21 @@ async function generateResumenCompleto(
       if (costo.excedente && costo.excedente > 0) {
         resumen += `- **Excedente:** ${formatCurrency(costo.excedente)}\n`;
       }
-      
+
       resumen += `- **Costo Total:** ${formatCurrency(costo.costo)}\n`;
     }
   } else {
     resumen += `- **Información no disponible**\n`;
   }
   resumen += `\n`;
-  
+
   // ===== INFORMACIÓN DE LA UNIDAD =====
   resumen += `🚚 *Datos de la Unidad o Grúa*\n`;
   if (unidad) {
     // Extraer número económico y tipo de grúa desde unidadOperativa
     let numeroEconomico = 'N/A';
     let tipoGrua = 'N/A';
-    
+
     if (unidad.unidadOperativa) {
       const match = unidad.unidadOperativa.match(/^(\d+)\s*(.*)$/);
       if (match) {
@@ -298,7 +298,7 @@ async function generateResumenCompleto(
         tipoGrua = match[2] || 'N/A';
       }
     }
-    
+
     resumen += `- **Operador:** ${unidad.operador || 'N/A'}\n`;
     resumen += `- **Tipo de Grúa:** ${tipoGrua}\n`;
     resumen += `- **Color:** ${hexToColorName(unidad.color)}\n`;
@@ -308,21 +308,21 @@ async function generateResumenCompleto(
     resumen += `- **Información no disponible**\n`;
   }
   resumen += `\n`;
-  
+
   // ===== INFORMACIÓN DE UBICACIÓN (solo para servicios en tránsito) =====
   const estatusConUbicacion = ['A Contactar'];
   const debeMostrarUbicacion = estatusConUbicacion.includes(expediente.estatus || '');
-  
+
   if (debeMostrarUbicacion) {
     resumen += `📍 *Ubicación y Tiempo Restante*\n`;
     if (ubicacion) {
       let ubicacionTexto = 'N/A';
-      
+
       if (ubicacion.latitud && ubicacion.longitud) {
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${ubicacion.latitud}%2C${ubicacion.longitud}`;
         ubicacionTexto = `[Ver en Maps](${mapsUrl})`;
       }
-      
+
       resumen += `- **Ubicación Actual de la Grúa:** ${ubicacionTexto}\n`;
       resumen += `- **Tiempo Restante Estimado:** ${ubicacion.tiempoRestante || 'N/A'}\n`;
     } else {
@@ -330,23 +330,23 @@ async function generateResumenCompleto(
     }
     resumen += `\n`;
   }
-  
+
   // ===== INFORMACIÓN DE TIEMPOS (solo para servicios que ya iniciaron) =====
   const estatusConTiempos = ['En Proceso', 'Concluido', 'Cancelado', 'Finalizado'];
   const debeMostrarTiempos = estatusConTiempos.includes(expediente.estatus || '');
-  
+
   if (debeMostrarTiempos) {
     resumen += `⏰ *Tiempos del Expediente*\n`;
     if (tiempos) {
       const contacto = tiempos.tc ? `${formatDateTime(tiempos.tc)} ⏳` : 'aún sin contacto';
       const termino = tiempos.tt ? `${formatDateTime(tiempos.tt)} ⏳` : 'aún sin término';
-      
+
       resumen += `- **Contacto:** ${contacto}\n`;
       resumen += `- **Termino:** ${termino}\n`;
     } else {
       resumen += `- **Información no disponible**\n`;
     }
   }
-  
+
   return resumen;
 }

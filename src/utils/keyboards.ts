@@ -7,10 +7,7 @@ import type { DatosExpediente } from '../types/index.js';
 export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    keyboard: [
-      ['📊 Consultar Expediente'],
-      ['❓ Ayuda']
-    ] as any,
+    keyboard: [['📊 Consultar Expediente'], ['❓ Ayuda']] as any,
     resize_keyboard: true,
     one_time_keyboard: false,
   };
@@ -23,14 +20,14 @@ export function getSeguimientoKeyboard(
   expedienteData: DatosExpediente | undefined
 ): ReplyKeyboardMarkup {
   const opciones: string[][] = [];
-  
+
   // Primera fila - Opciones principales
   opciones.push(['💰 Costo Total', '🚚 Unidad']);
-  
+
   // Segunda fila - Opciones contextuales según estatus
   const estatusConUbicacion = ['A Contactar'];
   const debeMostrarUbicacion = estatusConUbicacion.includes(expedienteData?.estatus || '');
-  
+
   if (debeMostrarUbicacion) {
     // Para servicios en tránsito: mostrar ubicación y tiempos
     opciones.push(['📍 Ubicación', '⏰ Tiempos']);
@@ -38,7 +35,6 @@ export function getSeguimientoKeyboard(
     // Para otros estatus: solo tiempos y estado
     opciones.push(['⏰ Tiempos', '📊 Estado']);
   }
-  
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any

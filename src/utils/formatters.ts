@@ -81,3 +81,21 @@ export function capitalize(str: string | undefined | null): string {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
+
+export function getStatusColor(status: string | undefined | null): string {
+  if (!status) return '⚪';
+
+  const statusNormalized = status.toUpperCase().trim();
+
+  const colorMap: Record<string, string> = {
+    'CONCLUIDO': '🟢',
+    'EN PROCESO': '🟣',
+    'CANCELADO': '🔴',
+    'SIN ASIGNAR': '⚪',
+    'A CONTACTAR': '🟠',
+    'ENFILADO': '🔵',
+    'MUERTO': '⚫'
+  };
+
+  return colorMap[statusNormalized] || '⚪';
+}

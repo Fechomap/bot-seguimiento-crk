@@ -36,13 +36,9 @@ export function initUsuario(chatId: number, usuarios: Record<number, Usuario>): 
  */
 function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  bot.sendMessage(
-    chatId,
-    '👋 *¡Hola!*\n\n📝 Escribe tu número de expediente',
-    {
-      parse_mode: 'Markdown',
-    }
-  );
+  bot.sendMessage(chatId, '👋 *¡Hola!*\n\n📝 Escribe tu número de expediente', {
+    parse_mode: 'Markdown',
+  });
 }
 
 /**

@@ -87,9 +87,12 @@ export class BotService {
   /**
    * Obtiene información completa del expediente (todos los endpoints) con caché
    */
-  async obtenerExpedienteCompleto(numeroExp: string, forceRefresh = false): Promise<ExpedienteCompleto | null> {
+  async obtenerExpedienteCompleto(
+    numeroExp: string,
+    forceRefresh = false
+  ): Promise<ExpedienteCompleto | null> {
     const cacheKey = numeroExp.toLowerCase().trim();
-    
+
     // Verificar caché si no es refresh forzado
     if (!forceRefresh) {
       const cached = this.getFromCache(cacheKey);
@@ -101,10 +104,10 @@ export class BotService {
 
     try {
       console.info(`🔄 Iniciando pre-carga completa para expediente: ${numeroExp}`);
-      
+
       // Obtener datos base del expediente primero
       const expedienteBase = await this.obtenerExpediente(numeroExp);
-      
+
       if (!expedienteBase) {
         console.warn(`❌ Expediente ${numeroExp} no encontrado`);
         return null;
@@ -129,12 +132,14 @@ export class BotService {
 
       // Guardar en caché
       this.saveToCache(cacheKey, expedienteCompleto);
-      
+
       console.info(`✅ Pre-carga completa finalizada para expediente: ${numeroExp}`);
       return expedienteCompleto;
-
     } catch (error) {
-      console.error(`❌ Error en pre-carga completa del expediente ${numeroExp}:`, (error as Error).message);
+      console.error(
+        `❌ Error en pre-carga completa del expediente ${numeroExp}:`,
+        (error as Error).message
+      );
       throw error;
     }
   }
@@ -144,14 +149,14 @@ export class BotService {
    */
   private getFromCache(numeroExp: string): ExpedienteCompleto | null {
     const entry = expedienteCache.get(numeroExp);
-    
+
     if (!entry) {
       return null;
     }
 
     const now = Date.now();
-    const isExpired = (now - entry.timestamp) > entry.ttl;
-    
+    const isExpired = now - entry.timestamp > entry.ttl;
+
     if (isExpired) {
       expedienteCache.delete(numeroExp);
       console.info(`🗑️ Cache expirado para expediente: ${numeroExp}`);
@@ -170,7 +175,7 @@ export class BotService {
       timestamp: Date.now(),
       ttl: CACHE_TTL,
     };
-    
+
     expedienteCache.set(numeroExp, entry);
     console.info(`💾 Expediente ${numeroExp} guardado en caché por ${CACHE_TTL / 1000}s`);
   }
