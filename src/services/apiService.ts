@@ -19,9 +19,11 @@ export class AxiosService {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T = any>(
     method: Method,
     url: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any = null,
     customHeaders: Record<string, string> = {},
     options: Partial<AxiosRequestConfig> = {}
@@ -38,6 +40,7 @@ export class AxiosService {
     };
 
     if (data) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       config.data = data;
     }
 

@@ -23,7 +23,7 @@ export function sanitizeInput(input: string | undefined | null): string {
  * Valida si una cadena es un número válido
  */
 export function isValidNumber(value: string): boolean {
-  return !isNaN(Number(value)) && value.trim() !== '';
+  return !Number.isNaN(Number(value)) && value.trim() !== '';
 }
 
 /**

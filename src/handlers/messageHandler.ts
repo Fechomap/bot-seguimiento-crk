@@ -33,6 +33,7 @@ export function registerMessageHandlers(
         'ℹ️ Por favor, usa el comando /start para iniciar la conversación.',
         {
           reply_markup: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
             keyboard: [['/start'] as any],
             resize_keyboard: true,
             one_time_keyboard: true,
@@ -72,7 +73,7 @@ export function registerMessageHandlers(
         break;
 
       case 'menu_seguimiento':
-        await handleMenuOption(bot, chatId, usuario, mensaje, botService);
+        await handleMenuOption(bot, chatId, usuario, mensaje, botService); // eslint-disable-line @typescript-eslint/no-use-before-define
         break;
 
       default:

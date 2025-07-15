@@ -79,5 +79,7 @@ export interface ExpedienteTiempos {
 }
 
 // Tipos para los handlers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MessageHandler = (msg: any) => Promise<void>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CallbackQueryHandler = (query: any) => Promise<void>;

@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 export function formatCurrency(value: number | string | undefined | null): string {
   if (value === undefined || value === null) return '$0.00';
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(numValue) ? '$0.00' : `$${numValue.toFixed(2)}`;
+  return Number.isNaN(numValue) ? '$0.00' : `$${numValue.toFixed(2)}`;
 }
 
 /**
@@ -71,7 +71,7 @@ export function hexToColorName(hex: string | undefined | null): string {
 export function formatNumber(value: number | string | undefined | null): string {
   if (value === undefined || value === null) return '0';
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(numValue) ? '0' : numValue.toLocaleString('es-MX');
+  return Number.isNaN(numValue) ? '0' : numValue.toLocaleString('es-MX');
 }
 
 /**

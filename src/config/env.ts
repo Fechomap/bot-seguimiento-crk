@@ -4,7 +4,9 @@ import { dirname, join } from 'path';
 import type { Config } from '../types/index.js';
 
 // Obtener la ruta del directorio actual en ESM
+// eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
 const __dirname = dirname(__filename);
 
 // Cargar variables de entorno

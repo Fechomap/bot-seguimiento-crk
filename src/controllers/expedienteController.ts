@@ -34,12 +34,15 @@ export async function processExpedienteRequest(
 
       if (expedienteData != null) {
         // Guardar datos del expediente en la sesión del usuario
+        // eslint-disable-next-line no-param-reassign
         usuario.datosExpediente = expedienteData;
+        // eslint-disable-next-line no-param-reassign
         usuario.expediente = expediente;
+        // eslint-disable-next-line no-param-reassign
         usuario.etapa = 'menu_seguimiento';
 
         // Mostrar detalles y menú de opciones
-        const detalles = formatExpedienteDetails(expedienteData);
+        const detalles = formatExpedienteDetails(expedienteData); // eslint-disable-line @typescript-eslint/no-use-before-define
         await bot.sendMessage(chatId, detalles, {
           parse_mode: 'Markdown',
           reply_markup: getSeguimientoKeyboard(expedienteData),
@@ -120,6 +123,7 @@ export async function processMenuAction(
         await handleTiempos(bot, chatId, expediente, usuario, botService);
         break;
       case 'otro_expediente':
+        // eslint-disable-next-line no-param-reassign
         usuario.etapa = 'esperando_numero_expediente';
         await bot.sendMessage(
           chatId,

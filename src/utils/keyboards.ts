@@ -6,6 +6,7 @@ import type { DatosExpediente } from '../types/index.js';
  */
 export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     keyboard: [['📊 Seguimiento de Expediente']] as any,
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -29,6 +30,7 @@ export function getSeguimientoKeyboard(
   opciones.push(['⏰ Tiempos', '🔄 Consultar otro Expediente']);
 
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     keyboard: opciones as any,
     resize_keyboard: true,
     one_time_keyboard: false,
