@@ -32,7 +32,7 @@ export async function processExpedienteRequest(
       // Mostrar animación de carga con emojis dinámicos
       const loadingMessage = await bot.sendMessage(
         chatId,
-        '⏳ *Consultando expediente...*\n\n_Iniciando búsqueda..._',
+        '🔍',
         { parse_mode: 'Markdown' }
       );
 
