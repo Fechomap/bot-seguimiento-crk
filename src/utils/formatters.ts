@@ -94,7 +94,7 @@ export function getStatusColor(status: string | undefined | null): string {
     'SIN ASIGNAR': '⚪',
     'A CONTACTAR': '🟠',
     'ENFILADO': '🔵',
-    'MUERTO': '⚫'
+    'MUERTO': '⚫',
   };
 
   return colorMap[statusNormalized] || '⚪';

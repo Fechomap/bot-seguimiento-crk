@@ -1,7 +1,12 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import { formatCurrency, formatDateTime, hexToColorName, getStatusColor } from '../utils/formatters.js';
+import {
+  formatCurrency,
+  formatDateTime,
+  hexToColorName,
+  getStatusColor,
+} from '../utils/formatters.js';
 import type { Usuario, DatosExpediente, ExpedienteCompleto } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -153,7 +158,7 @@ export async function processExpedienteRequest(
  */
 function formatExpedienteDetails(expedienteData: DatosExpediente): string {
   const statusColor = getStatusColor(expedienteData.estatus);
-  
+
   return (
     `🔍 *Detalles del Expediente*\n` +
     `- ***ESTATUS: ${statusColor}${expedienteData.estatus || 'N/A'}***\n` +
