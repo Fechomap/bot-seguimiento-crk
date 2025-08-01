@@ -88,13 +88,13 @@ export function getStatusColor(status: string | undefined | null): string {
   const statusNormalized = status.toUpperCase().trim();
 
   const colorMap: Record<string, string> = {
-    'CONCLUIDO': '🟢',
+    CONCLUIDO: '🟢',
     'EN PROCESO': '🟣',
-    'CANCELADO': '🔴',
+    CANCELADO: '🔴',
     'SIN ASIGNAR': '⚪',
     'A CONTACTAR': '🟠',
-    'ENFILADO': '🔵',
-    'MUERTO': '⚫',
+    ENFILADO: '🔵',
+    MUERTO: '⚫',
   };
 
   return colorMap[statusNormalized] || '⚪';

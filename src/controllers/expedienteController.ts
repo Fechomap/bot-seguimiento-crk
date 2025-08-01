@@ -1,12 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import {
-  formatCurrency,
-  formatDateTime,
-  hexToColorName,
-  getStatusColor,
-} from '../utils/formatters.js';
+import { formatCurrency, formatDateTime, getStatusColor } from '../utils/formatters.js';
 import type { Usuario, DatosExpediente, ExpedienteCompleto } from '../types/index.js';
 import type { BotService } from '../services/botService.js';
 
@@ -110,14 +105,14 @@ export async function processExpedienteRequest(
         usuario.etapa = 'menu_seguimiento';
 
         // Mostrar detalles básicos
-        const detalles = formatExpedienteDetails(expedienteCompleto.expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
+        const detalles = formatExpedienteDetails(expedienteCompleto.expediente, expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
         await bot.sendMessage(chatId, detalles, {
           parse_mode: 'Markdown',
           reply_markup: getSeguimientoKeyboard(expedienteCompleto.expediente),
         });
 
         // Enviar automáticamente el resumen completo
-        const resumenCompleto = generateResumenCompleto(expedienteCompleto, expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
+        const resumenCompleto = generateResumenCompleto(expedienteCompleto); // eslint-disable-line @typescript-eslint/no-use-before-define
         await bot.sendMessage(chatId, resumenCompleto, {
           parse_mode: 'Markdown',
         });
@@ -156,14 +151,17 @@ export async function processExpedienteRequest(
 /**
  * Formatea los detalles del expediente para mostrarlos
  */
-function formatExpedienteDetails(expedienteData: DatosExpediente): string {
+function formatExpedienteDetails(
+  expedienteData: DatosExpediente,
+  numeroExpediente: string
+): string {
   const statusColor = getStatusColor(expedienteData.estatus);
 
   return (
     `🔍 *Detalles del Expediente*\n` +
     `- ***ESTATUS: ${statusColor}${expedienteData.estatus || 'N/A'}***\n` +
-    `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n\n` +
-    `- **Vehículo:** ${expedienteData.vehiculo || 'N/A'}`
+    `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n` +
+    `- ***EXP: ${numeroExpediente || 'N/A'}***`
   );
 }
 
@@ -224,20 +222,11 @@ export async function processMenuAction(
 /**
  * Genera un resumen completo del expediente combinando toda la información
  */
-function generateResumenCompleto(
-  expedienteCompleto: ExpedienteCompleto,
-  numeroExpediente: string
-): string {
-  const { expediente, costo, unidad, ubicacion, tiempos } = expedienteCompleto;
+function generateResumenCompleto(expedienteCompleto: ExpedienteCompleto): string {
+  const { expediente, costo, ubicacion, tiempos } = expedienteCompleto;
 
   // Encabezado del resumen
-  let resumen = `📋 *RESUMEN COMPLETO DEL EXPEDIENTE*\n\n`;
-
-  // ===== INFORMACIÓN GENERAL =====
-  resumen += `🔍 *Detalles Generales*\n`;
-  resumen += `- ***EXPEDIENTE: ${numeroExpediente}***\n`;
-  resumen += `- **Nombre:** ${expediente.nombre || 'N/A'}\n`;
-  resumen += `- **Destino:** ${expediente.destino || 'N/A'}\n\n`;
+  let resumen = `📋 *RESUMEN DEL EXPEDIENTE*\n\n`;
 
   // ===== INFORMACIÓN DE COSTOS =====
   resumen += `💰 *Costo del Servicio*\n`;
@@ -289,29 +278,6 @@ function generateResumenCompleto(
   }
   resumen += `\n`;
 
-  // ===== INFORMACIÓN DE LA UNIDAD =====
-  resumen += `🚚 *Datos de la Unidad o Grúa*\n`;
-  if (unidad) {
-    // Extraer número económico y tipo de grúa desde unidadOperativa
-    let numeroEconomico = 'N/A';
-    let tipoGrua = 'N/A';
-
-    if (unidad.unidadOperativa) {
-      const match = unidad.unidadOperativa.match(/^(\d+)\s*(.*)$/);
-      if (match) {
-        numeroEconomico = match[1] || 'N/A';
-        tipoGrua = match[2] || 'N/A';
-      }
-    }
-
-    resumen += `- **Operador:** ${unidad.operador || 'N/A'}\n`;
-    resumen += `- **Tipo de Grúa:** ${tipoGrua}\n`;
-    resumen += `- **Color:** ${hexToColorName(unidad.color)}\n`;
-    resumen += `- **Número Económico:** ${numeroEconomico}\n`;
-    resumen += `- **Placas:** ${unidad.placas || 'N/A'}\n`;
-  } else {
-    resumen += `- **Información no disponible**\n`;
-  }
   resumen += `\n`;
 
   // ===== INFORMACIÓN DE UBICACIÓN (solo para servicios en tránsito) =====
