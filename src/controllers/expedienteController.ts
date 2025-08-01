@@ -36,14 +36,16 @@ export async function processExpedienteRequest(
         { parse_mode: 'Markdown' }
       );
 
-      // Animación con emojis que sugieren progreso y movimiento
+      // Animación súper limpia y minimalista
       const loadingSteps = [
-        '🔍 *Buscando expediente...*\n\n_Validando número..._',
-        '🌍 *Conectando...*\n\n_Accediendo al sistema..._',
-        '📡 *Transmitiendo...*\n\n_Enviando consulta..._',
-        '💫 *Procesando...*\n\n_Obteniendo información..._',
-        '📊 *Compilando datos...*\n\n_Organizando resultados..._',
-        '🎯 *Finalizando...*\n\n_¡Ya casi está listo!_',
+        '⠀⠀⠀⠀⠀⠀⠀🚛💨',
+        '⠀⠀⠀⠀⠀⠀🚛💨⠀',
+        '⠀⠀⠀⠀⠀🚛💨⠀⠀',
+        '⠀⠀⠀⠀🚛💨⠀⠀⠀',
+        '⠀⠀⠀🚛💨⠀⠀⠀⠀',
+        '⠀⠀🚛💨⠀⠀⠀⠀⠀',
+        '⠀🚛💨⠀⠀⠀⠀⠀⠀',
+        '🚛💨⠀⠀⠀⠀⠀⠀⠀',
       ];
 
       // Ejecutar animación mientras se hace la consulta
@@ -52,7 +54,7 @@ export async function processExpedienteRequest(
         for (let i = 0; i < loadingSteps.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
           await new Promise<void>((resolve) => {
-            setTimeout(resolve, 100); // Animación más rápida
+            setTimeout(resolve, 15); // ULTRA MEGA RÁPIDA 🏎️💨
           });
           try {
             const currentStep = loadingSteps[i];
