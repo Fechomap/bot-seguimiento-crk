@@ -29,69 +29,18 @@ export async function processExpedienteRequest(
     console.info(`🔍 Buscando expediente: ${expediente}`);
 
     try {
-      // Mostrar animación de carga con emojis dinámicos
-      const loadingMessage = await bot.sendMessage(chatId, '🔍', { parse_mode: 'Markdown' });
+      // Mensaje de búsqueda
+      const loadingMessage = await bot.sendMessage(chatId, '🔍 _Buscando expediente..._', {
+        parse_mode: 'Markdown',
+      });
 
-      // Animación súper limpia y minimalista
-      const loadingSteps = [
-        '⠀⠀⠀⠀⠀⠀⠀🚛💨',
-        '⠀⠀⠀⠀⠀⠀🚛💨⠀',
-        '⠀⠀⠀⠀⠀🚛💨⠀⠀',
-        '⠀⠀⠀⠀🚛💨⠀⠀⠀',
-        '⠀⠀⠀🚛💨⠀⠀⠀⠀',
-        '⠀⠀🚛💨⠀⠀⠀⠀⠀',
-        '⠀🚛💨⠀⠀⠀⠀⠀⠀',
-        '🚛💨⠀⠀⠀⠀⠀⠀⠀',
-      ];
-
-      // Ejecutar animación mientras se hace la consulta
-      const animationPromise = (async () => {
-        // eslint-disable-next-line no-await-in-loop
-        for (let i = 0; i < loadingSteps.length; i += 1) {
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, 15); // ULTRA MEGA RÁPIDA 🏎️💨
-          });
-          try {
-            const currentStep = loadingSteps[i];
-            if (loadingMessage.message_id && currentStep) {
-              // eslint-disable-next-line no-await-in-loop
-              await bot.editMessageText(currentStep, {
-                chat_id: chatId,
-                message_id: loadingMessage.message_id,
-                parse_mode: 'Markdown',
-              });
-            }
-          } catch (error) {
-            // Ignorar errores de edición (mensaje puede haber sido editado muy rápido)
-            console.warn('Animación: salto de frame');
-          }
-        }
-      })();
-
-      // ✨ NUEVA FUNCIONALIDAD: Pre-carga completa automática en paralelo con animación
-      const [expedienteCompleto] = await Promise.all([
-        botService.obtenerExpedienteCompleto(expediente),
-        animationPromise,
-      ]);
+      // Consultar API
+      const expedienteCompleto = await botService.obtenerExpedienteCompleto(expediente);
 
       if (expedienteCompleto?.expediente) {
-        // Mensaje final de éxito con emoji celebrativo
-        if (loadingMessage.message_id) {
-          await bot.editMessageText(
-            '🎉 *¡Expediente encontrado!*\n\n✨ _Información completa cargada y lista._',
-            {
-              chat_id: chatId,
-              message_id: loadingMessage.message_id,
-              parse_mode: 'Markdown',
-            }
-          );
-        }
+        // Eliminar mensaje de búsqueda
+        await bot.deleteMessage(chatId, loadingMessage.message_id);
 
-        // Pausa breve para que el usuario vea el mensaje de éxito
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 100);
-        });
         // Guardar datos completos en la sesión del usuario
         // eslint-disable-next-line no-param-reassign
         usuario.datosExpediente = expedienteCompleto.expediente;
@@ -114,20 +63,15 @@ export async function processExpedienteRequest(
         await bot.sendMessage(chatId, resumenCompleto, {
           parse_mode: 'Markdown',
         });
-      } else if (loadingMessage.message_id) {
-        // Mensaje final de error cuando no se encuentra el expediente
+      } else {
+        // Editar mensaje de búsqueda con error
         await bot.editMessageText(
-          '❌ *Expediente no encontrado*\n\n_El número ingresado no existe o no se encontró información._',
+          '❌ *Expediente no encontrado*\n\n_El número ingresado no existe en el sistema._',
           {
             chat_id: chatId,
             message_id: loadingMessage.message_id,
             parse_mode: 'Markdown',
           }
-        );
-      } else {
-        await bot.sendMessage(
-          chatId,
-          '❌ Lo siento, el número de expediente no es válido o no se encontró información. Por favor, intenta nuevamente.'
         );
       }
     } catch (error) {
