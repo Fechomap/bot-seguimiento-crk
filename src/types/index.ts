@@ -5,6 +5,8 @@ export interface Config {
   API_BASE_URL: string;
   NODE_ENV: string;
   IS_PRODUCTION: boolean;
+  PORT: number;
+  WEBHOOK_URL: string | null;
 }
 
 export interface Usuario {

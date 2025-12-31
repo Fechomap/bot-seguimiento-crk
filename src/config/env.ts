@@ -37,11 +37,18 @@ export function getConfig(): Config {
     console.info('🔒 Variables de entorno cargadas correctamente (modo desarrollo)');
   }
 
+  // Configuración de Railway para webhooks
+  const port = parseInt(process.env['PORT'] || '3000', 10);
+  const railwayDomain = process.env['RAILWAY_PUBLIC_DOMAIN'];
+  const webhookUrl = railwayDomain ? `https://${railwayDomain}/webhook` : null;
+
   return {
     TELEGRAM_TOKEN: token,
     API_BASE_URL: apiUrl,
     NODE_ENV: process.env['NODE_ENV'] || 'development',
     IS_PRODUCTION: process.env['NODE_ENV'] === 'production',
+    PORT: port,
+    WEBHOOK_URL: webhookUrl,
   };
 }
 

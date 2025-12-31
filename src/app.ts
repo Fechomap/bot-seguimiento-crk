@@ -1,3 +1,4 @@
+import http from 'http';
 import TelegramBot from 'node-telegram-bot-api';
 import { getConfig } from './config/env.js';
 import { BotService } from './services/botService.js';
@@ -21,12 +22,71 @@ if (!TOKEN) {
 // Crear servicio del bot
 const botService = new BotService();
 
-// Crear la instancia del bot en modo polling
-const bot = new TelegramBot(TOKEN, { polling: true });
-console.info('✅ Bot conectado correctamente.');
-
 // Objeto para almacenar el estado (sesión) de cada usuario
 const usuarios: Record<number, Usuario> = {};
+
+// Determinar modo de operación
+const useWebhook = config.WEBHOOK_URL !== null;
+
+let bot: TelegramBot;
+
+if (useWebhook) {
+  // === MODO WEBHOOK (Railway) ===
+  console.info(`🌐 Configurando webhook en: ${config.WEBHOOK_URL}`);
+
+  bot = new TelegramBot(TOKEN, { webHook: true });
+
+  // Crear servidor HTTP para recibir webhooks
+  const server = http.createServer((req, res) => {
+    if (req.method === 'POST' && req.url === '/webhook') {
+      let body = '';
+
+      req.on('data', (chunk: Buffer) => {
+        body += chunk.toString();
+      });
+
+      req.on('end', () => {
+        try {
+          const update = JSON.parse(body) as TelegramBot.Update;
+          bot.processUpdate(update);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+        } catch (error) {
+          console.error('❌ Error procesando webhook:', error);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        }
+      });
+    } else if (req.method === 'GET' && req.url === '/health') {
+      // Health check para Railway
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', mode: 'webhook' }));
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+
+  server.listen(config.PORT, () => {
+    console.info(`✅ Servidor HTTP escuchando en puerto ${config.PORT}`);
+  });
+
+  // Configurar webhook en Telegram
+  bot
+    .setWebHook(config.WEBHOOK_URL!)
+    .then(() => {
+      console.info('✅ Webhook configurado correctamente en Telegram');
+    })
+    .catch((error: Error) => {
+      console.error('❌ Error configurando webhook:', error.message);
+    });
+} else {
+  // === MODO POLLING (Local) ===
+  console.info('📡 Usando modo polling (desarrollo local)');
+
+  bot = new TelegramBot(TOKEN, { polling: true });
+  console.info('✅ Bot conectado en modo polling.');
+}
 
 // Registrar manejadores
 registerCommands(bot, usuarios);
@@ -41,4 +101,4 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Rechazo no manejado en:', promise, 'Razón:', reason);
 });
 
-console.info('✅ Bot listo y escuchando mensajes.');
+console.info(`✅ Bot listo y escuchando mensajes (modo: ${useWebhook ? 'webhook' : 'polling'}).`);
