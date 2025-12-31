@@ -30,11 +30,7 @@ export async function processExpedienteRequest(
 
     try {
       // Mostrar animación de carga con emojis dinámicos
-      const loadingMessage = await bot.sendMessage(
-        chatId,
-        '🔍',
-        { parse_mode: 'Markdown' }
-      );
+      const loadingMessage = await bot.sendMessage(chatId, '🔍', { parse_mode: 'Markdown' });
 
       // Animación súper limpia y minimalista
       const loadingSteps = [
