@@ -21,8 +21,8 @@ export interface DatosExpediente {
   servicio: string;
   nombre: string;
   vehiculo: string;
+  placas: string;
   destino: string;
-  // Agregar más campos según la respuesta de la API
 }
 
 export interface ApiResponse<T> {

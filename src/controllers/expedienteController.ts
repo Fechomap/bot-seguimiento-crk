@@ -101,9 +101,11 @@ function formatExpedienteDetails(
 
   return (
     `🔍 *Detalles del Expediente*\n` +
-    `- ***ESTATUS: ${statusColor}${expedienteData.estatus || 'N/A'}***\n` +
-    `- ***SERVICIO: ${expedienteData.servicio || 'N/A'}***\n` +
-    `- ***EXP: ${numeroExpediente || 'N/A'}***`
+    `- *ESTATUS:* ${statusColor}${expedienteData.estatus || 'N/A'}\n` +
+    `- *SERVICIO:* ${expedienteData.servicio || 'N/A'}\n` +
+    `- *EXP:* ${numeroExpediente || 'N/A'}\n` +
+    `- *Vehículo:* ${expedienteData.vehiculo || 'N/A'}\n` +
+    `- *Placas:* ${expedienteData.placas || 'N/A'}`
   );
 }
 
