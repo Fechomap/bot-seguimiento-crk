@@ -1,66 +1,37 @@
-import TelegramBot from 'node-telegram-bot-api';
-import type { Usuario } from '../types/index.js';
+import type { Bot } from 'grammy';
+import type { SessionManager } from '../services/sessionManager.js';
 
 /**
  * Registra los comandos del bot
  */
-export function registerCommands(bot: TelegramBot, usuarios: Record<number, Usuario>): void {
+export function registerCommands(bot: Bot, sessionManager: SessionManager): void {
   // Comando /start para iniciar la conversación
-  bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    initUsuario(chatId, usuarios); // eslint-disable-line @typescript-eslint/no-use-before-define
-    sendWelcomeMessage(bot, chatId); // eslint-disable-line @typescript-eslint/no-use-before-define
+  bot.command('start', async (ctx) => {
+    const chatId = ctx.chat.id;
+    sessionManager.init(chatId);
+    await ctx.reply('👋 *¡Hola!*\n\n📝 Escribe tu número de expediente', {
+      parse_mode: 'Markdown',
+    });
   });
 
   // Comando /help
-  bot.onText(/\/help/, (msg) => {
-    const chatId = msg.chat.id;
-    sendHelpMessage(bot, chatId); // eslint-disable-line @typescript-eslint/no-use-before-define
-  });
-}
+  bot.command('help', async (ctx) => {
+    const helpMessage =
+      '🤖 *Ayuda del Bot de Seguimiento*\n\n' +
+      '📌 *¿Cómo funciona?*\n' +
+      '1️⃣ Escribe tu número de expediente\n' +
+      '2️⃣ El bot carga toda la información automáticamente\n' +
+      '3️⃣ Usa "📋 Resumen Completo" para ver todo de una vez\n\n' +
+      '💡 *Tips:*\n' +
+      '• No necesitas botones, solo escribe el expediente\n' +
+      '• La información se carga instantáneamente\n' +
+      '• Puedes consultar diferentes expedientes cuando quieras\n\n' +
+      '*Comandos:*\n' +
+      '/start - Reiniciar conversación\n' +
+      '/help - Ver esta ayuda';
 
-/**
- * Inicializa el estado de un usuario
- */
-export function initUsuario(chatId: number, usuarios: Record<number, Usuario>): void {
-  // eslint-disable-next-line no-param-reassign
-  usuarios[chatId] = {
-    etapa: 'initial',
-    expediente: undefined,
-    datosExpediente: undefined,
-  };
-}
-
-/**
- * Envía un mensaje de bienvenida directo
- */
-function sendWelcomeMessage(bot: TelegramBot, chatId: number): void {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  bot.sendMessage(chatId, '👋 *¡Hola!*\n\n📝 Escribe tu número de expediente', {
-    parse_mode: 'Markdown',
-  });
-}
-
-/**
- * Envía un mensaje de ayuda
- */
-function sendHelpMessage(bot: TelegramBot, chatId: number): void {
-  const helpMessage =
-    '🤖 *Ayuda del Bot de Seguimiento*\n\n' +
-    '📌 *¿Cómo funciona?*\n' +
-    '1️⃣ Escribe tu número de expediente\n' +
-    '2️⃣ El bot carga toda la información automáticamente\n' +
-    '3️⃣ Usa "📋 Resumen Completo" para ver todo de una vez\n\n' +
-    '💡 *Tips:*\n' +
-    '• No necesitas botones, solo escribe el expediente\n' +
-    '• La información se carga instantáneamente\n' +
-    '• Puedes consultar diferentes expedientes cuando quieras\n\n' +
-    '*Comandos:*\n' +
-    '/start - Reiniciar conversación\n' +
-    '/help - Ver esta ayuda';
-
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  bot.sendMessage(chatId, helpMessage, {
-    parse_mode: 'Markdown',
+    await ctx.reply(helpMessage, {
+      parse_mode: 'Markdown',
+    });
   });
 }

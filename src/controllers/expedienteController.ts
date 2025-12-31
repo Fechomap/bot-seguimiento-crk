@@ -1,8 +1,9 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Context } from 'grammy';
 import { validateExpedienteNumber, sanitizeInput } from '../utils/validators.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
 import { formatCurrency, formatDateTime, getStatusColor } from '../utils/formatters.js';
-import type { Usuario, DatosExpediente, ExpedienteCompleto } from '../types/index.js';
+import type { DatosExpediente, ExpedienteCompleto } from '../types/index.js';
+import type { SessionManager } from '../services/sessionManager.js';
 import type { BotService } from '../services/botService.js';
 
 // Importaciones de los controladores específicos
@@ -10,85 +11,6 @@ import { handleCostoServicio } from './costoController.js';
 import { handleDatosUnidad } from './unidadController.js';
 import { handleUbicacionTiempo } from './ubicacionController.js';
 import { handleTiempos } from './tiemposController.js';
-
-/**
- * Procesa la solicitud de número de expediente con pre-carga automática
- */
-export async function processExpedienteRequest(
-  bot: TelegramBot,
-  chatId: number,
-  usuario: Usuario,
-  mensaje: string,
-  botService: BotService
-): Promise<void> {
-  // Sanitizar y validar entrada
-  const expedienteInput = sanitizeInput(mensaje);
-
-  if (validateExpedienteNumber(expedienteInput)) {
-    const expediente = expedienteInput;
-    console.info(`🔍 Buscando expediente: ${expediente}`);
-
-    try {
-      // Mensaje de búsqueda
-      const loadingMessage = await bot.sendMessage(chatId, '🔍 _Buscando expediente..._', {
-        parse_mode: 'Markdown',
-      });
-
-      // Consultar API
-      const expedienteCompleto = await botService.obtenerExpedienteCompleto(expediente);
-
-      if (expedienteCompleto?.expediente) {
-        // Eliminar mensaje de búsqueda
-        await bot.deleteMessage(chatId, loadingMessage.message_id);
-
-        // Guardar datos completos en la sesión del usuario
-        // eslint-disable-next-line no-param-reassign
-        usuario.datosExpediente = expedienteCompleto.expediente;
-        // eslint-disable-next-line no-param-reassign
-        usuario.expedienteCompleto = expedienteCompleto;
-        // eslint-disable-next-line no-param-reassign
-        usuario.expediente = expediente;
-        // eslint-disable-next-line no-param-reassign
-        usuario.etapa = 'menu_seguimiento';
-
-        // Mostrar detalles básicos
-        const detalles = formatExpedienteDetails(expedienteCompleto.expediente, expediente); // eslint-disable-line @typescript-eslint/no-use-before-define
-        await bot.sendMessage(chatId, detalles, {
-          parse_mode: 'Markdown',
-          reply_markup: getSeguimientoKeyboard(expedienteCompleto.expediente),
-        });
-
-        // Enviar automáticamente el resumen completo
-        const resumenCompleto = generateResumenCompleto(expedienteCompleto); // eslint-disable-line @typescript-eslint/no-use-before-define
-        await bot.sendMessage(chatId, resumenCompleto, {
-          parse_mode: 'Markdown',
-        });
-      } else {
-        // Editar mensaje de búsqueda con error
-        await bot.editMessageText(
-          '❌ *Expediente no encontrado*\n\n_El número ingresado no existe en el sistema._',
-          {
-            chat_id: chatId,
-            message_id: loadingMessage.message_id,
-            parse_mode: 'Markdown',
-          }
-        );
-      }
-    } catch (error) {
-      console.error('❌ Error:', error);
-      await bot.sendMessage(
-        chatId,
-        '❌ Hubo un error al consultar la información. Por favor, intenta más tarde.'
-      );
-    }
-  } else {
-    await bot.sendMessage(
-      chatId,
-      '⚠️ Por favor, *ingresa un número de expediente válido* (solo letras, números, espacios y guiones).',
-      { parse_mode: 'Markdown' }
-    );
-  }
-}
 
 /**
  * Formatea los detalles del expediente para mostrarlos
@@ -107,60 +29,6 @@ function formatExpedienteDetails(
     `- *Vehículo:* ${expedienteData.vehiculo || 'N/A'}\n` +
     `- *Placas:* ${expedienteData.placas || 'N/A'}`
   );
-}
-
-/**
- * Procesa las acciones de menú seleccionadas
- */
-export async function processMenuAction(
-  bot: TelegramBot,
-  chatId: number,
-  usuario: Usuario,
-  opcion: string,
-  botService: BotService
-): Promise<void> {
-  const { expediente } = usuario;
-
-  if (!expediente) {
-    await bot.sendMessage(
-      chatId,
-      '❌ No hay expediente activo. Por favor escribe tu número de expediente.'
-    );
-    return;
-  }
-
-  try {
-    switch (opcion) {
-      case 'costo_servicio':
-        await handleCostoServicio(bot, chatId, expediente, usuario, botService);
-        break;
-      case 'datos_unidad':
-        await handleDatosUnidad(bot, chatId, expediente, usuario, botService);
-        break;
-      case 'ubicacion_tiempo':
-        await handleUbicacionTiempo(bot, chatId, expediente, usuario, botService);
-        break;
-      case 'tiempos':
-        await handleTiempos(bot, chatId, expediente, usuario, botService);
-        break;
-      default:
-        await bot.sendMessage(
-          chatId,
-          'ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.',
-          {
-            reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
-          }
-        );
-        break;
-    }
-  } catch (error) {
-    console.error('❌ Error en processMenuAction:', error);
-    await bot.sendMessage(
-      chatId,
-      '❌ Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde.',
-      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
-    );
-  }
 }
 
 /**
@@ -264,4 +132,122 @@ function generateResumenCompleto(expedienteCompleto: ExpedienteCompleto): string
   }
 
   return resumen;
+}
+
+/**
+ * Procesa la solicitud de número de expediente con pre-carga automática
+ */
+export async function processExpedienteRequest(
+  ctx: Context,
+  sessionManager: SessionManager,
+  mensaje: string,
+  botService: BotService
+): Promise<void> {
+  const chatId = ctx.chat!.id;
+
+  // Sanitizar y validar entrada
+  const expedienteInput = sanitizeInput(mensaje);
+
+  if (validateExpedienteNumber(expedienteInput)) {
+    const expediente = expedienteInput;
+    console.info(`🔍 Buscando expediente: ${expediente}`);
+
+    try {
+      // Mensaje de búsqueda
+      const loadingMessage = await ctx.reply('🔍 _Buscando expediente..._', {
+        parse_mode: 'Markdown',
+      });
+
+      // Consultar API
+      const expedienteCompleto = await botService.obtenerExpedienteCompleto(expediente);
+
+      if (expedienteCompleto?.expediente) {
+        // Eliminar mensaje de búsqueda
+        await ctx.api.deleteMessage(chatId, loadingMessage.message_id);
+
+        // Guardar datos completos en la sesión del usuario
+        sessionManager.setExpedienteCompleto(chatId, expediente, expedienteCompleto);
+
+        // Mostrar detalles básicos
+        const detalles = formatExpedienteDetails(expedienteCompleto.expediente, expediente);
+        await ctx.reply(detalles, {
+          parse_mode: 'Markdown',
+          reply_markup: getSeguimientoKeyboard(expedienteCompleto.expediente),
+        });
+
+        // Enviar automáticamente el resumen completo
+        const resumenCompleto = generateResumenCompleto(expedienteCompleto);
+        await ctx.reply(resumenCompleto, {
+          parse_mode: 'Markdown',
+        });
+      } else {
+        // Editar mensaje de búsqueda con error
+        await ctx.api.editMessageText(
+          chatId,
+          loadingMessage.message_id,
+          '❌ *Expediente no encontrado*\n\n_El número ingresado no existe en el sistema._',
+          {
+            parse_mode: 'Markdown',
+          }
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
+      await ctx.reply(
+        '❌ Hubo un error al consultar la información. Por favor, intenta más tarde.'
+      );
+    }
+  } else {
+    await ctx.reply(
+      '⚠️ Por favor, *ingresa un número de expediente válido* (solo letras, números, espacios y guiones).',
+      { parse_mode: 'Markdown' }
+    );
+  }
+}
+
+/**
+ * Procesa las acciones de menú seleccionadas
+ */
+export async function processMenuAction(
+  ctx: Context,
+  sessionManager: SessionManager,
+  opcion: string,
+  botService: BotService
+): Promise<void> {
+  const chatId = ctx.chat!.id;
+  const usuario = sessionManager.getOrCreate(chatId);
+  const { expediente } = usuario;
+
+  if (!expediente) {
+    await ctx.reply('❌ No hay expediente activo. Por favor escribe tu número de expediente.');
+    return;
+  }
+
+  try {
+    switch (opcion) {
+      case 'costo_servicio':
+        await handleCostoServicio(ctx, expediente, sessionManager, botService);
+        break;
+      case 'datos_unidad':
+        await handleDatosUnidad(ctx, expediente, sessionManager, botService);
+        break;
+      case 'ubicacion_tiempo':
+        await handleUbicacionTiempo(ctx, expediente, sessionManager, botService);
+        break;
+      case 'tiempos':
+        await handleTiempos(ctx, expediente, sessionManager, botService);
+        break;
+      default:
+        await ctx.reply('ℹ️ Opción no reconocida. Por favor, selecciona una opción válida.', {
+          reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+        });
+        break;
+    }
+  } catch (error) {
+    console.error('❌ Error en processMenuAction:', error);
+    await ctx.reply(
+      '❌ Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde.',
+      { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
+    );
+  }
 }

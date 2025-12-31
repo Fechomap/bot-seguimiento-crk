@@ -1,10 +1,10 @@
+import { Bot, webhookCallback } from 'grammy';
 import http from 'http';
-import TelegramBot from 'node-telegram-bot-api';
 import { getConfig } from './config/env.js';
 import { BotService } from './services/botService.js';
+import { SessionManager } from './services/sessionManager.js';
 import { registerCommands } from './handlers/commandHandler.js';
 import { registerMessageHandlers } from './handlers/messageHandler.js';
-import type { Usuario } from './types/index.js';
 
 // Inicialización
 console.info('🚀 Iniciando bot de Telegram...');
@@ -19,44 +19,36 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-// Crear servicio del bot
-const botService = new BotService();
+// Crear instancia del bot
+const bot = new Bot(TOKEN);
 
-// Objeto para almacenar el estado (sesión) de cada usuario
-const usuarios: Record<number, Usuario> = {};
+// Crear servicios
+const botService = new BotService();
+const sessionManager = new SessionManager();
+
+// Registrar manejadores
+registerCommands(bot, sessionManager);
+registerMessageHandlers(bot, sessionManager, botService);
 
 // Determinar modo de operación
 const useWebhook = config.WEBHOOK_URL !== null;
-
-let bot: TelegramBot;
 
 if (useWebhook) {
   // === MODO WEBHOOK (Railway) ===
   console.info(`🌐 Configurando webhook en: ${config.WEBHOOK_URL}`);
 
-  bot = new TelegramBot(TOKEN, { webHook: true });
+  const handleUpdate = webhookCallback(bot, 'http');
 
   // Crear servidor HTTP para recibir webhooks
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/webhook') {
-      let body = '';
-
-      req.on('data', (chunk: Buffer) => {
-        body += chunk.toString();
-      });
-
-      req.on('end', () => {
-        try {
-          const update = JSON.parse(body) as TelegramBot.Update;
-          bot.processUpdate(update);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } catch (error) {
-          console.error('❌ Error procesando webhook:', error);
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-        }
-      });
+      try {
+        await handleUpdate(req, res);
+      } catch (error) {
+        console.error('❌ Error procesando webhook:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Internal error' }));
+      }
     } else if (req.method === 'GET' && req.url === '/health') {
       // Health check para Railway
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -72,8 +64,8 @@ if (useWebhook) {
   });
 
   // Configurar webhook en Telegram
-  bot
-    .setWebHook(config.WEBHOOK_URL!)
+  bot.api
+    .setWebhook(config.WEBHOOK_URL!)
     .then(() => {
       console.info('✅ Webhook configurado correctamente en Telegram');
     })
@@ -84,13 +76,12 @@ if (useWebhook) {
   // === MODO POLLING (Local) ===
   console.info('📡 Usando modo polling (desarrollo local)');
 
-  bot = new TelegramBot(TOKEN, { polling: true });
-  console.info('✅ Bot conectado en modo polling.');
+  bot.start({
+    onStart: () => {
+      console.info('✅ Bot conectado en modo polling.');
+    },
+  });
 }
-
-// Registrar manejadores
-registerCommands(bot, usuarios);
-registerMessageHandlers(bot, usuarios, botService);
 
 // Handlers de eventos globales
 process.on('uncaughtException', (error) => {

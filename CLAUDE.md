@@ -29,7 +29,7 @@ npm run typecheck    # Type check without emit
 ## Architecture
 
 ### Entry Point & Flow
-- `src/app.ts` - Initializes bot, creates TelegramBot instance with polling, registers handlers
+- `src/app.ts` - Initializes bot using grammY framework, supports polling (dev) and webhooks (prod)
 - User sessions stored in-memory as `Record<number, Usuario>` keyed by chat ID
 
 ### User Flow State Machine

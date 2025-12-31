@@ -1,27 +1,27 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Context } from 'grammy';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import type { Usuario } from '../types/index.js';
+import type { SessionManager } from '../services/sessionManager.js';
 import type { BotService } from '../services/botService.js';
 
 /**
  * Maneja la acción de consultar ubicación y tiempo restante
  */
 export async function handleUbicacionTiempo(
-  bot: TelegramBot,
-  chatId: number,
+  ctx: Context,
   expediente: string,
-  usuario: Usuario,
+  sessionManager: SessionManager,
   botService: BotService
 ): Promise<void> {
+  const chatId = ctx.chat!.id;
+  const usuario = sessionManager.getOrCreate(chatId);
+
   try {
     const expedienteUbicacion = await botService.obtenerExpedienteUbicacion(expediente);
 
     if (!expedienteUbicacion) {
-      await bot.sendMessage(
-        chatId,
-        '❌ No se encontró información de ubicación para este expediente.',
-        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
-      );
+      await ctx.reply('❌ No se encontró información de ubicación para este expediente.', {
+        reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+      });
       return;
     }
 
@@ -37,15 +37,14 @@ export async function handleUbicacionTiempo(
 - **Ubicación Actual de la Grúa:** ${coordsGrua ? `[Ver en Maps](${urlUbicacion})` : 'N/A'}
 - **Tiempo Restante Estimado:** ${expedienteUbicacion.tiempoRestante || 'N/A'}`;
 
-    await bot.sendMessage(chatId, mensaje, {
+    await ctx.reply(mensaje, {
       parse_mode: 'Markdown',
       reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
-      disable_web_page_preview: false, // Permitir vista previa para el enlace
+      link_preview_options: { is_disabled: false },
     });
   } catch (error) {
     console.error('❌ Error al obtener ubicación:', error);
-    await bot.sendMessage(
-      chatId,
+    await ctx.reply(
       '❌ No se pudo obtener información sobre la ubicación. Por favor, intenta nuevamente más tarde.',
       { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );

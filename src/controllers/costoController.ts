@@ -1,23 +1,24 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Context } from 'grammy';
 import { formatCurrency } from '../utils/formatters.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import type { Usuario } from '../types/index.js';
+import type { SessionManager } from '../services/sessionManager.js';
 import type { BotService } from '../services/botService.js';
 
 /**
  * Maneja la acción de consultar costo del servicio
  */
 export async function handleCostoServicio(
-  bot: TelegramBot,
-  chatId: number,
+  ctx: Context,
   expediente: string,
-  usuario: Usuario,
+  sessionManager: SessionManager,
   botService: BotService
 ): Promise<void> {
+  const chatId = ctx.chat!.id;
+  const usuario = sessionManager.getOrCreate(chatId);
   const cliente = usuario.datosExpediente;
 
   if (!cliente) {
-    await bot.sendMessage(chatId, '❌ No hay información del expediente disponible.', {
+    await ctx.reply('❌ No hay información del expediente disponible.', {
       reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
     });
     return;
@@ -27,11 +28,9 @@ export async function handleCostoServicio(
     const expedienteCosto = await botService.obtenerExpedienteCosto(expediente);
 
     if (!expedienteCosto) {
-      await bot.sendMessage(
-        chatId,
-        '❌ No se encontró información de costos para este expediente.',
-        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
-      );
+      await ctx.reply('❌ No se encontró información de costos para este expediente.', {
+        reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+      });
       return;
     }
 
@@ -98,14 +97,13 @@ export async function handleCostoServicio(
       mensaje += `- **Costo Total:** ${formatCurrency(expedienteCosto.costo)}`;
     }
 
-    await bot.sendMessage(chatId, mensaje, {
+    await ctx.reply(mensaje, {
       parse_mode: 'Markdown',
       reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
     });
   } catch (error) {
     console.error('❌ Error al obtener costo:', error);
-    await bot.sendMessage(
-      chatId,
+    await ctx.reply(
       '❌ No se pudo obtener información sobre el costo del servicio. Por favor, intenta nuevamente más tarde.',
       { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );

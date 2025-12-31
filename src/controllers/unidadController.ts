@@ -1,28 +1,28 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Context } from 'grammy';
 import { hexToColorName } from '../utils/formatters.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import type { Usuario } from '../types/index.js';
+import type { SessionManager } from '../services/sessionManager.js';
 import type { BotService } from '../services/botService.js';
 
 /**
  * Maneja la acción de consultar datos de la unidad
  */
 export async function handleDatosUnidad(
-  bot: TelegramBot,
-  chatId: number,
+  ctx: Context,
   expediente: string,
-  usuario: Usuario,
+  sessionManager: SessionManager,
   botService: BotService
 ): Promise<void> {
+  const chatId = ctx.chat!.id;
+  const usuario = sessionManager.getOrCreate(chatId);
+
   try {
     const expedienteUnidad = await botService.obtenerExpedienteUnidadOp(expediente);
 
     if (!expedienteUnidad) {
-      await bot.sendMessage(
-        chatId,
-        '❌ No se encontró información de la unidad para este expediente.',
-        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
-      );
+      await ctx.reply('❌ No se encontró información de la unidad para este expediente.', {
+        reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+      });
       return;
     }
 
@@ -49,14 +49,13 @@ export async function handleDatosUnidad(
 - **Número Económico:** ${numeroEconomico}
 - **Placas:** ${expedienteUnidad.placas || 'N/A'}`;
 
-    await bot.sendMessage(chatId, mensaje, {
+    await ctx.reply(mensaje, {
       parse_mode: 'Markdown',
       reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
     });
   } catch (error) {
     console.error('❌ Error al obtener datos de unidad:', error);
-    await bot.sendMessage(
-      chatId,
+    await ctx.reply(
       '❌ No se pudo obtener información sobre la unidad. Por favor, intenta nuevamente más tarde.',
       { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );

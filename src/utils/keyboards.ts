@@ -1,28 +1,21 @@
-import type { ReplyKeyboardMarkup, ReplyKeyboardRemove } from 'node-telegram-bot-api';
+import { Keyboard } from 'grammy';
 import type { DatosExpediente } from '../types/index.js';
 
 /**
  * Genera un teclado tradicional para el menú principal
  */
-export function getMainMenuKeyboard(): ReplyKeyboardMarkup {
-  return {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    keyboard: [['📊 Consultar Expediente'], ['❓ Ayuda']] as any,
-    resize_keyboard: true,
-    one_time_keyboard: false,
-  };
+export function getMainMenuKeyboard(): Keyboard {
+  return new Keyboard().text('📊 Consultar Expediente').row().text('❓ Ayuda').resized();
 }
 
 /**
  * Genera un teclado tradicional para el menú de seguimiento
  */
-export function getSeguimientoKeyboard(
-  expedienteData: DatosExpediente | undefined
-): ReplyKeyboardMarkup {
-  const opciones: string[][] = [];
+export function getSeguimientoKeyboard(expedienteData: DatosExpediente | undefined): Keyboard {
+  const keyboard = new Keyboard();
 
   // Primera fila - Opciones principales
-  opciones.push(['💰 Costo Total', '🚚 Unidad']);
+  keyboard.text('💰 Costo Total').text('🚚 Unidad').row();
 
   // Segunda fila - Opciones contextuales según estatus
   const estatusConUbicacion = ['A Contactar'];
@@ -30,27 +23,20 @@ export function getSeguimientoKeyboard(
 
   if (debeMostrarUbicacion) {
     // Para servicios en tránsito: mostrar ubicación y tiempos
-    opciones.push(['📍 Ubicación', '⏰ Tiempos']);
+    keyboard.text('📍 Ubicación').text('⏰ Tiempos');
   } else {
     // Para otros estatus: solo tiempos y estado
-    opciones.push(['⏰ Tiempos', '📊 Estado']);
+    keyboard.text('⏰ Tiempos').text('📊 Estado');
   }
 
-  return {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    keyboard: opciones as any,
-    resize_keyboard: true,
-    one_time_keyboard: false,
-  };
+  return keyboard.resized();
 }
 
 /**
  * Elimina el teclado actual
  */
-export function removeKeyboard(): ReplyKeyboardRemove {
-  return {
-    remove_keyboard: true,
-  };
+export function removeKeyboard(): { remove_keyboard: true } {
+  return { remove_keyboard: true };
 }
 
 /**

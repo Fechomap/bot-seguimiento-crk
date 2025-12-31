@@ -1,4 +1,5 @@
 // Tipos principales del bot
+import type { Context } from 'grammy';
 
 export interface Config {
   TELEGRAM_TOKEN: string;
@@ -96,8 +97,7 @@ export interface CacheEntry {
   ttl: number; // Time to live en milisegundos
 }
 
-// Tipos para los handlers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type MessageHandler = (msg: any) => Promise<void>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CallbackQueryHandler = (query: any) => Promise<void>;
+// Tipos para los handlers - usando Context de grammY
+export type BotContext = Context;
+export type MessageHandler = (ctx: BotContext) => Promise<void>;
+export type CallbackQueryHandler = (ctx: BotContext) => Promise<void>;

@@ -1,28 +1,28 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Context } from 'grammy';
 import { formatDateTime } from '../utils/formatters.js';
 import { getSeguimientoKeyboard } from '../utils/keyboards.js';
-import type { Usuario } from '../types/index.js';
+import type { SessionManager } from '../services/sessionManager.js';
 import type { BotService } from '../services/botService.js';
 
 /**
  * Maneja la acción de consultar tiempos del expediente
  */
 export async function handleTiempos(
-  bot: TelegramBot,
-  chatId: number,
+  ctx: Context,
   expediente: string,
-  usuario: Usuario,
+  sessionManager: SessionManager,
   botService: BotService
 ): Promise<void> {
+  const chatId = ctx.chat!.id;
+  const usuario = sessionManager.getOrCreate(chatId);
+
   try {
     const expedienteTiempos = await botService.obtenerExpedienteTiempos(expediente);
 
     if (!expedienteTiempos) {
-      await bot.sendMessage(
-        chatId,
-        '❌ No se encontró información de tiempos para este expediente.',
-        { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
-      );
+      await ctx.reply('❌ No se encontró información de tiempos para este expediente.', {
+        reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
+      });
       return;
     }
 
@@ -34,14 +34,13 @@ export async function handleTiempos(
       expedienteTiempos.tt ? `${formatDateTime(expedienteTiempos.tt)} ⏳` : 'aún sin término'
     }`;
 
-    await bot.sendMessage(chatId, mensaje, {
+    await ctx.reply(mensaje, {
       parse_mode: 'Markdown',
       reply_markup: getSeguimientoKeyboard(usuario.datosExpediente),
     });
   } catch (error) {
     console.error('❌ Error al obtener tiempos:', error);
-    await bot.sendMessage(
-      chatId,
+    await ctx.reply(
       '❌ No se pudo obtener información sobre los tiempos. Por favor, intenta nuevamente más tarde.',
       { reply_markup: getSeguimientoKeyboard(usuario.datosExpediente) }
     );

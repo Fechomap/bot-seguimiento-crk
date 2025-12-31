@@ -29,7 +29,7 @@ El bot muestra estados con colores identificativos:
 
 - **TypeScript** - Type safety y desarrollo robusto
 - **Node.js** - Runtime del servidor
-- **node-telegram-bot-api** - Integración con Telegram
+- **grammY** - Framework moderno para bots de Telegram
 - **Axios** - Cliente HTTP para APIs
 - **Jest** - Framework de testing
 - **ESLint** - Linting con estándares Airbnb
